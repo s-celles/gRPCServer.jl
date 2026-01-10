@@ -142,7 +142,7 @@ Full documentation is available at [https://s-celles.github.io/gRPCServer.jl](ht
 
 ## Related Packages
 
-- [gRPCClient.jl](https://github.com/JuliaComputing/gRPCClient.jl) - gRPC client for Julia
+- [gRPCClient.jl](https://github.com/JuliaIO/gRPCClient.jl) - gRPC client for Julia
 - [ProtoBuf.jl](https://github.com/JuliaIO/ProtoBuf.jl) - Protocol buffer support for Julia
 
 ## License
