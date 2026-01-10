@@ -1,0 +1,31 @@
+name = "gRPCServer"
+uuid = "608c6337-0d7d-447f-bb69-0f5674ee3959"
+version = "0.1.0"
+authors = ["gRPCServer Contributors"]
+
+[deps]
+Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+OpenSSL = "4d8831e6-92b7-49fb-bdf8-b643e874388c"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+ProtoBuf = "3349acd9-ac6a-5e09-bcdb-63829b23a429"
+Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
+TranscodingStreams = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+
+[compat]
+CodecZlib = "0.7"
+OpenSSL = "1"
+PrecompileTools = "1"
+ProtoBuf = "1.2"
+TranscodingStreams = "0.9"
+julia = "1.10"
+
+[extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Aqua", "Test"]
