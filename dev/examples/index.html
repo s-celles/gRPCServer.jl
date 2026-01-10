@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples · gRPCServer.jl</title><meta name="title" content="Examples · gRPCServer.jl"/><meta property="og:title" content="Examples · gRPCServer.jl"/><meta property="twitter:title" content="Examples · gRPCServer.jl"/><meta name="description" content="Documentation for gRPCServer.jl."/><meta property="og:description" content="Documentation for gRPCServer.jl."/><meta property="twitter:description" content="Documentation for gRPCServer.jl."/><meta property="og:url" content="https://s-celles.github.io/gRPCServer.jl/examples/"/><meta property="twitter:url" content="https://s-celles.github.io/gRPCServer.jl/examples/"/><link rel="canonical" href="https://s-celles.github.io/gRPCServer.jl/examples/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">gRPCServer.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../quickstart/">Quick Start</a></li><li><a class="tocitem" href="../api/">API Reference</a></li><li class="is-active"><a class="tocitem" href>Examples</a><ul class="internal"><li><a class="tocitem" href="#Basic-Unary-RPC"><span>Basic Unary RPC</span></a></li><li><a class="tocitem" href="#Server-Streaming"><span>Server Streaming</span></a></li><li><a class="tocitem" href="#Client-Streaming"><span>Client Streaming</span></a></li><li><a class="tocitem" href="#Bidirectional-Streaming"><span>Bidirectional Streaming</span></a></li><li><a class="tocitem" href="#Using-Interceptors"><span>Using Interceptors</span></a></li><li><a class="tocitem" href="#Health-Checking"><span>Health Checking</span></a></li><li><a class="tocitem" href="#TLS-Configuration"><span>TLS Configuration</span></a></li><li><a class="tocitem" href="#Error-Handling"><span>Error Handling</span></a></li><li><a class="tocitem" href="#Context-Usage"><span>Context Usage</span></a></li><li><a class="tocitem" href="#Compression"><span>Compression</span></a></li><li><a class="tocitem" href="#Graceful-Shutdown"><span>Graceful Shutdown</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Examples</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Examples</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h1><h2 id="Basic-Unary-RPC"><a class="docs-heading-anchor" href="#Basic-Unary-RPC">Basic Unary RPC</a><a id="Basic-Unary-RPC-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Unary-RPC" title="Permalink"></a></h2><p>A simple echo service that returns the input message:</p><pre><code class="language-julia hljs">using gRPCServer
+
+function echo_handler(ctx::ServerContext, request)
+    return request  # Echo back the request
+end
+
+server = GRPCServer(&quot;0.0.0.0&quot;, 50051)
+
+descriptor = ServiceDescriptor(
+    &quot;example.Echo&quot;,
+    Dict(
+        &quot;Echo&quot; =&gt; MethodDescriptor(
+            &quot;Echo&quot;,
+            MethodType.UNARY,
+            &quot;example.Message&quot;,
+            &quot;example.Message&quot;,
+            echo_handler
+        )
+    ),
+    nothing
+)
+
+gRPCServer.register_service!(server.dispatcher, descriptor)
+run(server)</code></pre><h2 id="Server-Streaming"><a class="docs-heading-anchor" href="#Server-Streaming">Server Streaming</a><a id="Server-Streaming-1"></a><a class="docs-heading-anchor-permalink" href="#Server-Streaming" title="Permalink"></a></h2><p>A service that streams multiple responses:</p><pre><code class="language-julia hljs">function stream_numbers(ctx::ServerContext, request, stream::ServerStream{NumberResponse})
+    for i in 1:request.count
+        if is_cancelled(ctx)
+            return nothing
+        end
+        send!(stream, NumberResponse(value = i))
+        sleep(0.1)
+    end
+    return nothing
+end
+
+descriptor = ServiceDescriptor(
+    &quot;example.Numbers&quot;,
+    Dict(
+        &quot;StreamNumbers&quot; =&gt; MethodDescriptor(
+            &quot;StreamNumbers&quot;,
+            MethodType.SERVER_STREAMING,
+            &quot;example.CountRequest&quot;,
+            &quot;example.NumberResponse&quot;,
+            stream_numbers
+        )
+    ),
+    nothing
+)</code></pre><h2 id="Client-Streaming"><a class="docs-heading-anchor" href="#Client-Streaming">Client Streaming</a><a id="Client-Streaming-1"></a><a class="docs-heading-anchor-permalink" href="#Client-Streaming" title="Permalink"></a></h2><p>A service that receives multiple requests and returns a single response:</p><pre><code class="language-julia hljs">function sum_numbers(ctx::ServerContext, stream::ClientStream{NumberRequest})
+    total = 0
+    for request in stream
+        total += request.value
+    end
+    return SumResponse(total = total)
+end
+
+descriptor = ServiceDescriptor(
+    &quot;example.Math&quot;,
+    Dict(
+        &quot;Sum&quot; =&gt; MethodDescriptor(
+            &quot;Sum&quot;,
+            MethodType.CLIENT_STREAMING,
+            &quot;example.NumberRequest&quot;,
+            &quot;example.SumResponse&quot;,
+            sum_numbers
+        )
+    ),
+    nothing
+)</code></pre><h2 id="Bidirectional-Streaming"><a class="docs-heading-anchor" href="#Bidirectional-Streaming">Bidirectional Streaming</a><a id="Bidirectional-Streaming-1"></a><a class="docs-heading-anchor-permalink" href="#Bidirectional-Streaming" title="Permalink"></a></h2><p>A chat-like service with two-way streaming:</p><pre><code class="language-julia hljs">function chat(ctx::ServerContext, stream::BidiStream{ChatMessage, ChatMessage})
+    for message in stream
+        if is_cancelled(ctx)
+            break
+        end
+        # Echo back with prefix
+        response = ChatMessage(
+            user = &quot;Server&quot;,
+            text = &quot;You said: $(message.text)&quot;
+        )
+        send!(stream, response)
+    end
+    close!(stream)
+    return nothing
+end
+
+descriptor = ServiceDescriptor(
+    &quot;example.Chat&quot;,
+    Dict(
+        &quot;Chat&quot; =&gt; MethodDescriptor(
+            &quot;Chat&quot;,
+            MethodType.BIDI_STREAMING,
+            &quot;example.ChatMessage&quot;,
+            &quot;example.ChatMessage&quot;,
+            chat
+        )
+    ),
+    nothing
+)</code></pre><h2 id="Using-Interceptors"><a class="docs-heading-anchor" href="#Using-Interceptors">Using Interceptors</a><a id="Using-Interceptors-1"></a><a class="docs-heading-anchor-permalink" href="#Using-Interceptors" title="Permalink"></a></h2><h3 id="Logging-Interceptor"><a class="docs-heading-anchor" href="#Logging-Interceptor">Logging Interceptor</a><a id="Logging-Interceptor-1"></a><a class="docs-heading-anchor-permalink" href="#Logging-Interceptor" title="Permalink"></a></h3><pre><code class="language-julia hljs">server = GRPCServer(&quot;0.0.0.0&quot;, 50051)
+
+# Add logging for all requests
+add_interceptor!(server, LoggingInterceptor(
+    log_requests = true,
+    log_responses = true,
+    log_errors = true
+))</code></pre><h3 id="Metrics-Interceptor"><a class="docs-heading-anchor" href="#Metrics-Interceptor">Metrics Interceptor</a><a id="Metrics-Interceptor-1"></a><a class="docs-heading-anchor-permalink" href="#Metrics-Interceptor" title="Permalink"></a></h3><pre><code class="language-julia hljs">request_counter = Ref(0)
+latencies = Float64[]
+
+add_interceptor!(server, MetricsInterceptor(
+    on_request = (method, size) -&gt; begin
+        request_counter[] += 1
+    end,
+    on_response = (method, status, duration_ms, size) -&gt; begin
+        push!(latencies, duration_ms)
+    end
+))</code></pre><h3 id="Custom-Authentication-Interceptor"><a class="docs-heading-anchor" href="#Custom-Authentication-Interceptor">Custom Authentication Interceptor</a><a id="Custom-Authentication-Interceptor-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Authentication-Interceptor" title="Permalink"></a></h3><pre><code class="language-julia hljs">struct AuthInterceptor &lt;: Interceptor
+    valid_tokens::Set{String}
+end
+
+function (auth::AuthInterceptor)(
+    ctx::ServerContext,
+    request::Any,
+    info::MethodInfo,
+    next::Function
+)
+    token = get_metadata_string(ctx, &quot;authorization&quot;)
+
+    if token === nothing || !(token in auth.valid_tokens)
+        throw(GRPCError(
+            StatusCode.UNAUTHENTICATED,
+            &quot;Invalid or missing authentication token&quot;
+        ))
+    end
+
+    return next(ctx, request)
+end
+
+add_interceptor!(server, AuthInterceptor(Set([&quot;token123&quot;, &quot;token456&quot;])))</code></pre><h3 id="Rate-Limiting-Interceptor"><a class="docs-heading-anchor" href="#Rate-Limiting-Interceptor">Rate Limiting Interceptor</a><a id="Rate-Limiting-Interceptor-1"></a><a class="docs-heading-anchor-permalink" href="#Rate-Limiting-Interceptor" title="Permalink"></a></h3><pre><code class="language-julia hljs">mutable struct RateLimitInterceptor &lt;: Interceptor
+    requests_per_second::Int
+    window_start::Float64
+    request_count::Int
+end
+
+RateLimitInterceptor(rps::Int) = RateLimitInterceptor(rps, time(), 0)
+
+function (rl::RateLimitInterceptor)(
+    ctx::ServerContext,
+    request::Any,
+    info::MethodInfo,
+    next::Function
+)
+    now = time()
+
+    if now - rl.window_start &gt;= 1.0
+        rl.window_start = now
+        rl.request_count = 0
+    end
+
+    rl.request_count += 1
+
+    if rl.request_count &gt; rl.requests_per_second
+        throw(GRPCError(
+            StatusCode.RESOURCE_EXHAUSTED,
+            &quot;Rate limit exceeded&quot;
+        ))
+    end
+
+    return next(ctx, request)
+end
+
+add_interceptor!(server, RateLimitInterceptor(100))</code></pre><h2 id="Health-Checking"><a class="docs-heading-anchor" href="#Health-Checking">Health Checking</a><a id="Health-Checking-1"></a><a class="docs-heading-anchor-permalink" href="#Health-Checking" title="Permalink"></a></h2><pre><code class="language-julia hljs">server = GRPCServer(&quot;0.0.0.0&quot;, 50051;
+    enable_health_check = true
+)
+
+# Set overall server health
+set_health!(server, HealthStatus.SERVING)
+
+# Set health for specific service
+set_health!(server, &quot;my.Service&quot;, HealthStatus.SERVING)
+
+# Mark service as not ready (e.g., during maintenance)
+set_health!(server, &quot;my.Service&quot;, HealthStatus.NOT_SERVING)</code></pre><h2 id="TLS-Configuration"><a class="docs-heading-anchor" href="#TLS-Configuration">TLS Configuration</a><a id="TLS-Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#TLS-Configuration" title="Permalink"></a></h2><h3 id="Basic-TLS"><a class="docs-heading-anchor" href="#Basic-TLS">Basic TLS</a><a id="Basic-TLS-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-TLS" title="Permalink"></a></h3><pre><code class="language-julia hljs">tls_config = TLSConfig(
+    cert_chain = &quot;server.crt&quot;,
+    private_key = &quot;server.key&quot;
+)
+
+server = GRPCServer(&quot;0.0.0.0&quot;, 50051; tls = tls_config)</code></pre><h3 id="Mutual-TLS-(mTLS)"><a class="docs-heading-anchor" href="#Mutual-TLS-(mTLS)">Mutual TLS (mTLS)</a><a id="Mutual-TLS-(mTLS)-1"></a><a class="docs-heading-anchor-permalink" href="#Mutual-TLS-(mTLS)" title="Permalink"></a></h3><pre><code class="language-julia hljs">tls_config = TLSConfig(
+    cert_chain = &quot;server.crt&quot;,
+    private_key = &quot;server.key&quot;,
+    client_ca = &quot;ca.crt&quot;,
+    require_client_cert = true
+)
+
+server = GRPCServer(&quot;0.0.0.0&quot;, 50051; tls = tls_config)</code></pre><h3 id="Hot-Reloading-Certificates"><a class="docs-heading-anchor" href="#Hot-Reloading-Certificates">Hot Reloading Certificates</a><a id="Hot-Reloading-Certificates-1"></a><a class="docs-heading-anchor-permalink" href="#Hot-Reloading-Certificates" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Reload certificates without restarting server
+reload_tls!(server)</code></pre><h2 id="Error-Handling"><a class="docs-heading-anchor" href="#Error-Handling">Error Handling</a><a id="Error-Handling-1"></a><a class="docs-heading-anchor-permalink" href="#Error-Handling" title="Permalink"></a></h2><h3 id="Returning-Specific-Status-Codes"><a class="docs-heading-anchor" href="#Returning-Specific-Status-Codes">Returning Specific Status Codes</a><a id="Returning-Specific-Status-Codes-1"></a><a class="docs-heading-anchor-permalink" href="#Returning-Specific-Status-Codes" title="Permalink"></a></h3><pre><code class="language-julia hljs">function my_handler(ctx::ServerContext, request)
+    if request.id &lt; 0
+        throw(GRPCError(
+            StatusCode.INVALID_ARGUMENT,
+            &quot;ID must be non-negative&quot;
+        ))
+    end
+
+    item = find_item(request.id)
+    if item === nothing
+        throw(GRPCError(
+            StatusCode.NOT_FOUND,
+            &quot;Item not found: $(request.id)&quot;
+        ))
+    end
+
+    if !has_permission(ctx, item)
+        throw(GRPCError(
+            StatusCode.PERMISSION_DENIED,
+            &quot;Access denied to item $(request.id)&quot;
+        ))
+    end
+
+    return item
+end</code></pre><h3 id="Error-Details"><a class="docs-heading-anchor" href="#Error-Details">Error Details</a><a id="Error-Details-1"></a><a class="docs-heading-anchor-permalink" href="#Error-Details" title="Permalink"></a></h3><pre><code class="language-julia hljs">throw(GRPCError(
+    StatusCode.INVALID_ARGUMENT,
+    &quot;Multiple validation errors&quot;,
+    Any[
+        Dict(&quot;field&quot; =&gt; &quot;email&quot;, &quot;error&quot; =&gt; &quot;Invalid email format&quot;),
+        Dict(&quot;field&quot; =&gt; &quot;age&quot;, &quot;error&quot; =&gt; &quot;Must be positive&quot;)
+    ]
+))</code></pre><h2 id="Context-Usage"><a class="docs-heading-anchor" href="#Context-Usage">Context Usage</a><a id="Context-Usage-1"></a><a class="docs-heading-anchor-permalink" href="#Context-Usage" title="Permalink"></a></h2><h3 id="Accessing-Metadata"><a class="docs-heading-anchor" href="#Accessing-Metadata">Accessing Metadata</a><a id="Accessing-Metadata-1"></a><a class="docs-heading-anchor-permalink" href="#Accessing-Metadata" title="Permalink"></a></h3><pre><code class="language-julia hljs">function my_handler(ctx::ServerContext, request)
+    # Get string metadata
+    auth = get_metadata_string(ctx, &quot;authorization&quot;)
+
+    # Get binary metadata (keys ending in -bin)
+    trace = get_metadata_binary(ctx, &quot;x-trace-bin&quot;)
+
+    # Check remaining time before deadline
+    remaining = remaining_time(ctx)
+    if remaining !== nothing &amp;&amp; remaining &lt; 1.0
+        @warn &quot;Less than 1 second remaining&quot;
+    end
+
+    return response
+end</code></pre><h3 id="Setting-Response-Headers-and-Trailers"><a class="docs-heading-anchor" href="#Setting-Response-Headers-and-Trailers">Setting Response Headers and Trailers</a><a id="Setting-Response-Headers-and-Trailers-1"></a><a class="docs-heading-anchor-permalink" href="#Setting-Response-Headers-and-Trailers" title="Permalink"></a></h3><pre><code class="language-julia hljs">function my_handler(ctx::ServerContext, request)
+    # Set response header
+    set_header!(ctx, &quot;x-request-id&quot;, string(ctx.request_id))
+
+    # Set trailer (sent at end of response)
+    set_trailer!(ctx, &quot;x-processing-time&quot;, &quot;50ms&quot;)
+
+    return response
+end</code></pre><h2 id="Compression"><a class="docs-heading-anchor" href="#Compression">Compression</a><a id="Compression-1"></a><a class="docs-heading-anchor-permalink" href="#Compression" title="Permalink"></a></h2><h3 id="Server-side-Compression"><a class="docs-heading-anchor" href="#Server-side-Compression">Server-side Compression</a><a id="Server-side-Compression-1"></a><a class="docs-heading-anchor-permalink" href="#Server-side-Compression" title="Permalink"></a></h3><pre><code class="language-julia hljs">server = GRPCServer(&quot;0.0.0.0&quot;, 50051;
+    enabled_compression = [CompressionCodec.GZIP, CompressionCodec.DEFLATE]
+)</code></pre><h3 id="Manual-Compression"><a class="docs-heading-anchor" href="#Manual-Compression">Manual Compression</a><a id="Manual-Compression-1"></a><a class="docs-heading-anchor-permalink" href="#Manual-Compression" title="Permalink"></a></h3><pre><code class="language-julia hljs">using gRPCServer: compress, decompress, CompressionCodec
+
+data = Vector{UInt8}(&quot;Large data to compress...&quot;)
+
+# Compress with GZIP
+compressed = compress(data, CompressionCodec.GZIP)
+
+# Decompress
+original = decompress(compressed, CompressionCodec.GZIP)</code></pre><h2 id="Graceful-Shutdown"><a class="docs-heading-anchor" href="#Graceful-Shutdown">Graceful Shutdown</a><a id="Graceful-Shutdown-1"></a><a class="docs-heading-anchor-permalink" href="#Graceful-Shutdown" title="Permalink"></a></h2><pre><code class="language-julia hljs">server = GRPCServer(&quot;0.0.0.0&quot;, 50051)
+register!(server, MyService())
+
+# Run in background task
+server_task = @async run(server; block = true)
+
+# Later, initiate graceful shutdown
+@info &quot;Shutting down...&quot;
+stop!(server; timeout = 30.0)
+
+# Wait for server to stop
+wait(server_task)
+@info &quot;Server stopped&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/">« API Reference</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Saturday 10 January 2026 15:25">Saturday 10 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

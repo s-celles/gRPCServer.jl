@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Quick Start · gRPCServer.jl</title><meta name="title" content="Quick Start · gRPCServer.jl"/><meta property="og:title" content="Quick Start · gRPCServer.jl"/><meta property="twitter:title" content="Quick Start · gRPCServer.jl"/><meta name="description" content="Documentation for gRPCServer.jl."/><meta property="og:description" content="Documentation for gRPCServer.jl."/><meta property="twitter:description" content="Documentation for gRPCServer.jl."/><meta property="og:url" content="https://s-celles.github.io/gRPCServer.jl/quickstart/"/><meta property="twitter:url" content="https://s-celles.github.io/gRPCServer.jl/quickstart/"/><link rel="canonical" href="https://s-celles.github.io/gRPCServer.jl/quickstart/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">gRPCServer.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Quick Start</a><ul class="internal"><li><a class="tocitem" href="#Prerequisites"><span>Prerequisites</span></a></li><li><a class="tocitem" href="#Installation"><span>Installation</span></a></li><li><a class="tocitem" href="#Step-1:-Define-Your-Service"><span>Step 1: Define Your Service</span></a></li><li><a class="tocitem" href="#Step-2:-Generate-Julia-Types"><span>Step 2: Generate Julia Types</span></a></li><li><a class="tocitem" href="#Step-3:-Implement-Handlers"><span>Step 3: Implement Handlers</span></a></li><li><a class="tocitem" href="#Step-4:-Create-Service-Descriptor"><span>Step 4: Create Service Descriptor</span></a></li><li><a class="tocitem" href="#Step-5:-Create-and-Run-Server"><span>Step 5: Create and Run Server</span></a></li><li><a class="tocitem" href="#Complete-Example"><span>Complete Example</span></a></li><li><a class="tocitem" href="#Testing-with-grpcurl"><span>Testing with grpcurl</span></a></li><li><a class="tocitem" href="#Testing-with-gRPCClient.jl"><span>Testing with gRPCClient.jl</span></a></li><li><a class="tocitem" href="#Adding-Interceptors"><span>Adding Interceptors</span></a></li><li><a class="tocitem" href="#Enabling-TLS"><span>Enabling TLS</span></a></li><li><a class="tocitem" href="#Error-Handling"><span>Error Handling</span></a></li><li><a class="tocitem" href="#Graceful-Shutdown"><span>Graceful Shutdown</span></a></li></ul></li><li><a class="tocitem" href="../api/">API Reference</a></li><li><a class="tocitem" href="../examples/">Examples</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Quick Start</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Quick Start</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Quick-Start"><a class="docs-heading-anchor" href="#Quick-Start">Quick Start</a><a id="Quick-Start-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Start" title="Permalink"></a></h1><p>This guide demonstrates how to create a gRPC server in Julia using gRPCServer.jl.</p><h2 id="Prerequisites"><a class="docs-heading-anchor" href="#Prerequisites">Prerequisites</a><a id="Prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Prerequisites" title="Permalink"></a></h2><ul><li>Julia 1.10 or later</li><li>ProtoBuf.jl for message type generation</li></ul><h2 id="Installation"><a class="docs-heading-anchor" href="#Installation">Installation</a><a id="Installation-1"></a><a class="docs-heading-anchor-permalink" href="#Installation" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Pkg
+Pkg.add(&quot;gRPCServer&quot;)</code></pre><h2 id="Step-1:-Define-Your-Service"><a class="docs-heading-anchor" href="#Step-1:-Define-Your-Service">Step 1: Define Your Service</a><a id="Step-1:-Define-Your-Service-1"></a><a class="docs-heading-anchor-permalink" href="#Step-1:-Define-Your-Service" title="Permalink"></a></h2><p>Create a <code>.proto</code> file defining your service:</p><pre><code class="language-protobuf hljs">// greeter.proto
+syntax = &quot;proto3&quot;;
+
+package helloworld;
+
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply);
+  rpc SayHelloStream (HelloRequest) returns (stream HelloReply);
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}</code></pre><h2 id="Step-2:-Generate-Julia-Types"><a class="docs-heading-anchor" href="#Step-2:-Generate-Julia-Types">Step 2: Generate Julia Types</a><a id="Step-2:-Generate-Julia-Types-1"></a><a class="docs-heading-anchor-permalink" href="#Step-2:-Generate-Julia-Types" title="Permalink"></a></h2><p>Use ProtoBuf.jl to generate Julia types directly from the <code>.proto</code> file (no external tools needed):</p><pre><code class="language-julia hljs">using ProtoBuf
+
+# Generate Julia structs from proto file
+# Arguments: proto_file, search_path, output_directory
+protojl(&quot;greeter.proto&quot;, &quot;.&quot;, &quot;generated&quot;)</code></pre><p>This creates <code>generated/helloworld.jl</code> with <code>HelloRequest</code> and <code>HelloReply</code> structs.</p><h2 id="Step-3:-Implement-Handlers"><a class="docs-heading-anchor" href="#Step-3:-Implement-Handlers">Step 3: Implement Handlers</a><a id="Step-3:-Implement-Handlers-1"></a><a class="docs-heading-anchor-permalink" href="#Step-3:-Implement-Handlers" title="Permalink"></a></h2><pre><code class="language-julia hljs">using gRPCServer
+include(&quot;generated/helloworld.jl&quot;)
+using .helloworld
+
+# Unary RPC handler
+function say_hello(ctx::ServerContext, request::HelloRequest)::HelloReply
+    name = isempty(request.name) ? &quot;World&quot; : request.name
+    return HelloReply(message = &quot;Hello, $(name)!&quot;)
+end
+
+# Server streaming RPC handler
+function say_hello_stream(
+    ctx::ServerContext,
+    request::HelloRequest,
+    stream::ServerStream{HelloReply}
+)::Nothing
+    name = isempty(request.name) ? &quot;World&quot; : request.name
+    for i in 1:5
+        send!(stream, HelloReply(message = &quot;Hello $(i), $(name)!&quot;))
+        sleep(0.5)  # Simulate work
+    end
+    return nothing
+end</code></pre><h2 id="Step-4:-Create-Service-Descriptor"><a class="docs-heading-anchor" href="#Step-4:-Create-Service-Descriptor">Step 4: Create Service Descriptor</a><a id="Step-4:-Create-Service-Descriptor-1"></a><a class="docs-heading-anchor-permalink" href="#Step-4:-Create-Service-Descriptor" title="Permalink"></a></h2><pre><code class="language-julia hljs">struct GreeterService end
+
+function gRPCServer.service_descriptor(::GreeterService)
+    ServiceDescriptor(
+        &quot;helloworld.Greeter&quot;,
+        Dict(
+            &quot;SayHello&quot; =&gt; MethodDescriptor(
+                &quot;SayHello&quot;,
+                MethodType.UNARY,
+                &quot;helloworld.HelloRequest&quot;,
+                &quot;helloworld.HelloReply&quot;,
+                say_hello
+            ),
+            &quot;SayHelloStream&quot; =&gt; MethodDescriptor(
+                &quot;SayHelloStream&quot;,
+                MethodType.SERVER_STREAMING,
+                &quot;helloworld.HelloRequest&quot;,
+                &quot;helloworld.HelloReply&quot;,
+                say_hello_stream
+            )
+        ),
+        nothing  # File descriptor for reflection (optional)
+    )
+end</code></pre><h2 id="Step-5:-Create-and-Run-Server"><a class="docs-heading-anchor" href="#Step-5:-Create-and-Run-Server">Step 5: Create and Run Server</a><a id="Step-5:-Create-and-Run-Server-1"></a><a class="docs-heading-anchor-permalink" href="#Step-5:-Create-and-Run-Server" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Create server
+server = GRPCServer(&quot;0.0.0.0&quot;, 50051)
+
+# Register service
+register!(server, GreeterService())
+
+# Start server (blocking)
+@info &quot;Starting gRPC server on port 50051...&quot;
+run(server)</code></pre><h2 id="Complete-Example"><a class="docs-heading-anchor" href="#Complete-Example">Complete Example</a><a id="Complete-Example-1"></a><a class="docs-heading-anchor-permalink" href="#Complete-Example" title="Permalink"></a></h2><p>Save as <code>server.jl</code>:</p><pre><code class="language-julia hljs">using gRPCServer
+
+# Include generated types
+include(&quot;generated/helloworld.jl&quot;)
+using .helloworld
+
+# Handlers
+function say_hello(ctx::ServerContext, request::HelloRequest)::HelloReply
+    @info &quot;Received request&quot; name=request.name request_id=ctx.request_id
+    HelloReply(message = &quot;Hello, $(request.name)!&quot;)
+end
+
+function say_hello_stream(
+    ctx::ServerContext,
+    request::HelloRequest,
+    stream::ServerStream{HelloReply}
+)::Nothing
+    for i in 1:5
+        if ctx.cancelled
+            @warn &quot;Stream cancelled by client&quot;
+            return nothing
+        end
+        send!(stream, HelloReply(message = &quot;Hello $(i), $(request.name)!&quot;))
+        sleep(0.5)
+    end
+    return nothing
+end
+
+# Service definition
+struct GreeterService end
+
+function gRPCServer.service_descriptor(::GreeterService)
+    ServiceDescriptor(
+        &quot;helloworld.Greeter&quot;,
+        Dict(
+            &quot;SayHello&quot; =&gt; MethodDescriptor(
+                &quot;SayHello&quot;, MethodType.UNARY,
+                &quot;helloworld.HelloRequest&quot;, &quot;helloworld.HelloReply&quot;,
+                say_hello
+            ),
+            &quot;SayHelloStream&quot; =&gt; MethodDescriptor(
+                &quot;SayHelloStream&quot;, MethodType.SERVER_STREAMING,
+                &quot;helloworld.HelloRequest&quot;, &quot;helloworld.HelloReply&quot;,
+                say_hello_stream
+            )
+        ),
+        nothing
+    )
+end
+
+# Run server
+function main()
+    server = GRPCServer(&quot;0.0.0.0&quot;, 50051;
+        enable_health_check = true,
+        enable_reflection = true
+    )
+
+    register!(server, GreeterService())
+
+    @info &quot;gRPC server starting&quot; host=&quot;0.0.0.0&quot; port=50051
+    run(server)
+end
+
+main()</code></pre><p>Run with:</p><pre><code class="language-bash hljs">julia server.jl</code></pre><h2 id="Testing-with-grpcurl"><a class="docs-heading-anchor" href="#Testing-with-grpcurl">Testing with grpcurl</a><a id="Testing-with-grpcurl-1"></a><a class="docs-heading-anchor-permalink" href="#Testing-with-grpcurl" title="Permalink"></a></h2><pre><code class="language-bash hljs"># List services (requires reflection enabled)
+grpcurl -plaintext localhost:50051 list
+
+# Call unary RPC
+grpcurl -plaintext -d &#39;{&quot;name&quot;: &quot;Julia&quot;}&#39; \
+  localhost:50051 helloworld.Greeter/SayHello
+
+# Call streaming RPC
+grpcurl -plaintext -d &#39;{&quot;name&quot;: &quot;Julia&quot;}&#39; \
+  localhost:50051 helloworld.Greeter/SayHelloStream</code></pre><h2 id="Testing-with-gRPCClient.jl"><a class="docs-heading-anchor" href="#Testing-with-gRPCClient.jl">Testing with gRPCClient.jl</a><a id="Testing-with-gRPCClient.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Testing-with-gRPCClient.jl" title="Permalink"></a></h2><pre><code class="language-julia hljs">using gRPCClient
+include(&quot;generated/helloworld.jl&quot;)
+using .helloworld
+
+# Create channel
+channel = gRPCClient.Channel(&quot;localhost&quot;, 50051)
+
+# Create stub
+stub = GreeterStub(channel)
+
+# Call unary RPC
+response = stub.SayHello(HelloRequest(name = &quot;Julia&quot;))
+println(response.message)  # &quot;Hello, Julia!&quot;
+
+# Call streaming RPC
+for reply in stub.SayHelloStream(HelloRequest(name = &quot;Julia&quot;))
+    println(reply.message)
+end</code></pre><h2 id="Adding-Interceptors"><a class="docs-heading-anchor" href="#Adding-Interceptors">Adding Interceptors</a><a id="Adding-Interceptors-1"></a><a class="docs-heading-anchor-permalink" href="#Adding-Interceptors" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Add built-in logging interceptor
+add_interceptor!(server, LoggingInterceptor())
+
+# Add metrics interceptor with callbacks
+add_interceptor!(server, MetricsInterceptor(
+    on_request = (method, size) -&gt; increment_counter(&quot;requests&quot;),
+    on_response = (method, status, ms, size) -&gt; record_latency(ms)
+))</code></pre><h2 id="Enabling-TLS"><a class="docs-heading-anchor" href="#Enabling-TLS">Enabling TLS</a><a id="Enabling-TLS-1"></a><a class="docs-heading-anchor-permalink" href="#Enabling-TLS" title="Permalink"></a></h2><pre><code class="language-julia hljs">tls_config = TLSConfig(
+    cert_chain = &quot;/path/to/server.crt&quot;,
+    private_key = &quot;/path/to/server.key&quot;,
+    client_ca = nothing,  # Set for mTLS
+    require_client_cert = false,
+    min_version = :TLSv1_2
+)
+
+server = GRPCServer(&quot;0.0.0.0&quot;, 50051;
+    tls = tls_config
+)</code></pre><h2 id="Error-Handling"><a class="docs-heading-anchor" href="#Error-Handling">Error Handling</a><a id="Error-Handling-1"></a><a class="docs-heading-anchor-permalink" href="#Error-Handling" title="Permalink"></a></h2><pre><code class="language-julia hljs">function my_handler(ctx::ServerContext, request)
+    if !is_valid(request)
+        throw(GRPCError(
+            StatusCode.INVALID_ARGUMENT,
+            &quot;Request validation failed&quot;,
+            []
+        ))
+    end
+
+    user = find_user(request.user_id)
+    if user === nothing
+        throw(GRPCError(
+            StatusCode.NOT_FOUND,
+            &quot;User not found: $(request.user_id)&quot;,
+            []
+        ))
+    end
+
+    return MyResponse(user = user)
+end</code></pre><h2 id="Graceful-Shutdown"><a class="docs-heading-anchor" href="#Graceful-Shutdown">Graceful Shutdown</a><a id="Graceful-Shutdown-1"></a><a class="docs-heading-anchor-permalink" href="#Graceful-Shutdown" title="Permalink"></a></h2><pre><code class="language-julia hljs"># In a separate task or signal handler
+function shutdown(server::GRPCServer)
+    @info &quot;Initiating graceful shutdown...&quot;
+    stop!(server; timeout = 30.0)  # Wait up to 30s for in-flight requests
+    @info &quot;Server stopped&quot;
+end</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Saturday 10 January 2026 15:25">Saturday 10 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
