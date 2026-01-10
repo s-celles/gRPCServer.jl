@@ -133,7 +133,7 @@ add_interceptor!(server, LoggingInterceptor())
 
 ## Documentation
 
-Full documentation is available at [https://s-celles.github.io/gRPCServer.jl](https://juliacomputing.github.io/gRPCServer.jl).
+Full documentation is available at https://s-celles.github.io/gRPCServer.jl
 
 ## Requirements
 
