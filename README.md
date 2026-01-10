@@ -1,7 +1,7 @@
 # gRPCServer.jl
 
-[![Build Status](https://github.com/JuliaComputing/gRPCServer.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaComputing/gRPCServer.jl/actions/workflows/CI.yml)
-[![Documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliacomputing.github.io/gRPCServer.jl/stable)
+[![Build Status](https://github.com/s-celles/gRPCServer.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/s-celles/gRPCServer.jl/actions/workflows/CI.yml)
+[![Documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://s-celles.github.io/gRPCServer.jl/stable)
 
 A native Julia implementation of a gRPC server library.
 
