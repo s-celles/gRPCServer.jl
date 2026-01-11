@@ -107,7 +107,7 @@ A security audit would help identify vulnerabilities in the HTTP/2 and TLS imple
 - [ ] Apply for free security audit programs (e.g., OSTIF, Linux Foundation)
 - [ ] Community security review
 - [ ] Document threat model and security considerations
-- [ ] Add security policy (SECURITY.md)
+- [x] Add security policy (SECURITY.md)
 
 **Areas of concern**:
 - HTTP/2 frame parsing and validation
