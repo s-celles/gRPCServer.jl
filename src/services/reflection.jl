@@ -1,75 +1,10 @@
 # gRPC Server Reflection Service for gRPCServer.jl
 # Per https://github.com/grpc/grpc/blob/master/doc/server-reflection.md
+#
+# Note: The protobuf types (ServerReflectionRequest, ServerReflectionResponse, etc.)
+# are defined in proto/grpc/reflection/v1alpha/reflection_pb.jl
 
-"""
-    ServerReflectionRequest
-
-Request message for server reflection.
-"""
-struct ServerReflectionRequest
-    host::String
-    file_by_filename::Union{String, Nothing}
-    file_containing_symbol::Union{String, Nothing}
-    file_containing_extension::Union{Nothing, Any}
-    all_extension_numbers_of_type::Union{String, Nothing}
-    list_services::Union{String, Nothing}
-
-    function ServerReflectionRequest(;
-        host::String="",
-        file_by_filename::Union{String, Nothing}=nothing,
-        file_containing_symbol::Union{String, Nothing}=nothing,
-        file_containing_extension::Union{Nothing, Any}=nothing,
-        all_extension_numbers_of_type::Union{String, Nothing}=nothing,
-        list_services::Union{String, Nothing}=nothing
-    )
-        new(host, file_by_filename, file_containing_symbol,
-            file_containing_extension, all_extension_numbers_of_type, list_services)
-    end
-end
-
-"""
-    ServiceResponse
-
-Response containing service information.
-"""
-struct ServiceResponse
-    name::String
-end
-
-"""
-    ListServiceResponse
-
-Response containing list of services.
-"""
-struct ListServiceResponse
-    service::Vector{ServiceResponse}
-end
-
-"""
-    ServerReflectionResponse
-
-Response message for server reflection.
-"""
-struct ServerReflectionResponse
-    valid_host::String
-    original_request::ServerReflectionRequest
-    file_descriptor_response::Union{Vector{Vector{UInt8}}, Nothing}
-    all_extension_numbers_response::Union{Vector{Int32}, Nothing}
-    list_services_response::Union{ListServiceResponse, Nothing}
-    error_response::Union{String, Nothing}
-
-    function ServerReflectionResponse(;
-        valid_host::String="",
-        original_request::ServerReflectionRequest=ServerReflectionRequest(),
-        file_descriptor_response::Union{Vector{Vector{UInt8}}, Nothing}=nothing,
-        all_extension_numbers_response::Union{Vector{Int32}, Nothing}=nothing,
-        list_services_response::Union{ListServiceResponse, Nothing}=nothing,
-        error_response::Union{String, Nothing}=nothing
-    )
-        new(valid_host, original_request, file_descriptor_response,
-            all_extension_numbers_response, list_services_response, error_response)
-    end
-end
+using ProtoBuf: OneOf
 
 """
     ReflectionService
@@ -109,60 +44,66 @@ function handle_reflection_request(
     request::ServerReflectionRequest,
     registry::ServiceRegistry
 )::ServerReflectionResponse
-    if request.list_services !== nothing
+    if request.message_request !== nothing && request.message_request.name === :list_services
         # List all services
         services = [ServiceResponse(name) for name in list_services(registry)]
+        list_response = ListServiceResponse(services)
         return ServerReflectionResponse(
-            valid_host=request.host,
-            original_request=request,
-            list_services_response=ListServiceResponse(services)
+            request.host,
+            request,
+            OneOf(:list_services_response, list_response)
         )
-    elseif request.file_containing_symbol !== nothing
+    elseif request.message_request !== nothing && request.message_request.name === :file_containing_symbol
         # Find file descriptor containing symbol
-        symbol = request.file_containing_symbol
+        symbol = request.message_request[]::String
 
         # Look up service
         service = get_service(registry, symbol)
         if service !== nothing && service.file_descriptor !== nothing
+            fd_response = FileDescriptorResponse([service.file_descriptor])
             return ServerReflectionResponse(
-                valid_host=request.host,
-                original_request=request,
-                file_descriptor_response=[service.file_descriptor]
+                request.host,
+                request,
+                OneOf(:file_descriptor_response, fd_response)
             )
         end
 
         # Symbol not found
+        error_resp = ErrorResponse(Int32(5), "Symbol not found: $symbol")  # NOT_FOUND = 5
         return ServerReflectionResponse(
-            valid_host=request.host,
-            original_request=request,
-            error_response="Symbol not found: $symbol"
+            request.host,
+            request,
+            OneOf(:error_response, error_resp)
         )
-    elseif request.file_by_filename !== nothing
+    elseif request.message_request !== nothing && request.message_request.name === :file_by_filename
         # Find file descriptor by filename
-        filename = request.file_by_filename
+        filename = request.message_request[]::String
 
         # Search all services for matching file descriptor
         for (_, service) in registry.services
             if service.file_descriptor !== nothing
                 # Would check filename in descriptor
+                fd_response = FileDescriptorResponse([service.file_descriptor])
                 return ServerReflectionResponse(
-                    valid_host=request.host,
-                    original_request=request,
-                    file_descriptor_response=[service.file_descriptor]
+                    request.host,
+                    request,
+                    OneOf(:file_descriptor_response, fd_response)
                 )
             end
         end
 
+        error_resp = ErrorResponse(Int32(5), "File not found: $filename")  # NOT_FOUND = 5
         return ServerReflectionResponse(
-            valid_host=request.host,
-            original_request=request,
-            error_response="File not found: $filename"
+            request.host,
+            request,
+            OneOf(:error_response, error_resp)
         )
     else
+        error_resp = ErrorResponse(Int32(3), "Unknown request type")  # INVALID_ARGUMENT = 3
         return ServerReflectionResponse(
-            valid_host=request.host,
-            original_request=request,
-            error_response="Unknown request type"
+            request.host,
+            request,
+            OneOf(:error_response, error_resp)
         )
     end
 end

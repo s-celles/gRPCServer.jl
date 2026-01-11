@@ -4,7 +4,8 @@
 using Test
 using gRPCServer
 
-include("test_utils.jl")
+# TestUtils is included once in runtests.jl to avoid method redefinition warnings
+# using TestUtils is inherited from the parent module
 
 @testset "TLS Integration Tests" begin
     @testset "TLSConfig Creation" begin

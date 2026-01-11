@@ -1,6 +1,10 @@
 using Test
 using gRPCServer
 
+# Include TestUtils module once for all tests to avoid method redefinition warnings
+include("TestUtils.jl")
+using .TestUtils
+
 @testset "gRPCServer.jl" begin
     # Aqua.jl quality checks
     include("aqua.jl")
@@ -17,6 +21,7 @@ using gRPCServer
     include("unit/test_server.jl")
     include("unit/test_tls.jl")
     include("unit/test_reflection.jl")
+    include("unit/test_hpack.jl")
 
     # Integration tests
     include("integration/test_unary.jl")
