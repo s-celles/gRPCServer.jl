@@ -240,6 +240,59 @@ function huffman_decode(data::AbstractVector{UInt8})::Vector{UInt8}
     return result
 end
 
+"""
+    huffman_encode(data::AbstractVector{UInt8}) -> Vector{UInt8}
+
+Encode data using Huffman encoding per RFC 7541 Appendix B.
+Returns the Huffman-encoded bytes with proper padding.
+"""
+function huffman_encode(data::AbstractVector{UInt8})::Vector{UInt8}
+    result = UInt8[]
+    buffer = UInt64(0)  # Bit buffer for accumulating bits
+    bits_in_buffer = 0
+
+    for byte in data
+        # Get Huffman code and length for this byte (1-indexed in Julia)
+        code, code_bits = HUFFMAN_CODES[Int(byte) + 1]
+
+        # Add code bits to buffer
+        buffer = (buffer << code_bits) | UInt64(code)
+        bits_in_buffer += code_bits
+
+        # Extract complete bytes from buffer
+        while bits_in_buffer >= 8
+            bits_in_buffer -= 8
+            push!(result, UInt8((buffer >> bits_in_buffer) & 0xFF))
+        end
+    end
+
+    # Handle remaining bits - pad with EOS prefix (all 1s)
+    if bits_in_buffer > 0
+        # Pad remaining bits with 1s (EOS prefix)
+        padding_bits = 8 - bits_in_buffer
+        buffer = (buffer << padding_bits) | ((1 << padding_bits) - 1)
+        push!(result, UInt8(buffer & 0xFF))
+    end
+
+    return result
+end
+
+"""
+    huffman_encoded_length(data::AbstractVector{UInt8}) -> Int
+
+Calculate the length of Huffman-encoded data without actually encoding.
+Used to decide whether Huffman encoding saves space.
+"""
+function huffman_encoded_length(data::AbstractVector{UInt8})::Int
+    total_bits = 0
+    for byte in data
+        _, code_bits = HUFFMAN_CODES[Int(byte) + 1]
+        total_bits += code_bits
+    end
+    # Round up to bytes
+    return (total_bits + 7) ÷ 8
+end
+
 # Build reverse lookup for static table
 const STATIC_TABLE_BY_NAME = Dict{String, Int}()
 const STATIC_TABLE_BY_PAIR = Dict{Tuple{String, String}, Int}()
@@ -434,24 +487,29 @@ end
     encode_string(s::String; huffman::Bool=false) -> Vector{UInt8}
 
 Encode a string using HPACK string representation.
-Note: Huffman encoding not implemented - uses raw encoding.
+Supports both raw and Huffman encoding per RFC 7541 Section 5.2.
+
+When `huffman=true`, the string is Huffman-encoded if it saves space.
 """
 function encode_string(s::String; huffman::Bool=false)::Vector{UInt8}
-    data = Vector{UInt8}(s)
+    raw_data = Vector{UInt8}(s)
 
     if huffman
-        # Huffman encoding not implemented - fall back to raw
-        huffman = false
+        # Encode with Huffman and check if it saves space
+        encoded_data = huffman_encode(raw_data)
+        if length(encoded_data) < length(raw_data)
+            # Use Huffman encoding - saves space
+            length_bytes = encode_integer(length(encoded_data), 7)
+            length_bytes[1] |= 0x80  # Set Huffman flag (H bit)
+            return vcat(length_bytes, encoded_data)
+        end
+        # Huffman doesn't save space, fall through to raw encoding
     end
 
-    length_bytes = encode_integer(length(data), 7)
-    if !huffman
-        length_bytes[1] &= 0x7F  # Clear huffman flag
-    else
-        length_bytes[1] |= 0x80  # Set huffman flag
-    end
-
-    return vcat(length_bytes, data)
+    # Raw encoding (no Huffman)
+    length_bytes = encode_integer(length(raw_data), 7)
+    length_bytes[1] &= 0x7F  # Clear Huffman flag
+    return vcat(length_bytes, raw_data)
 end
 
 """
