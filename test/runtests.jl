@@ -21,6 +21,7 @@ using .TestUtils
     include("unit/test_server.jl")
     include("unit/test_tls.jl")
     include("unit/test_reflection.jl")
+    include("unit/test_hpack.jl")
 
     # Integration tests
     include("integration/test_unary.jl")
