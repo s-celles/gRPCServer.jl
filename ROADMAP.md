@@ -79,6 +79,42 @@ The constitution recommends TTFX for basic server startup under 5 seconds.
 - [ ] Optimize precompilation workload if needed
 - [ ] Document TTFX metrics
 
+## To Be Considered
+
+### Publishing Internal Project Artifacts
+
+**Status**: Under Consideration
+
+Consider making internal development artifacts publicly available for transparency and community contribution.
+
+**Options**:
+- [ ] Publish project constitution (`.specify/memory/constitution.md`)
+- [ ] Publish specs/ directory with design documents
+- [ ] Include `.proto` files in repository (currently in `specs/*/contracts/`)
+- [ ] Alternative: Download `.proto` files from upstream [grpc/grpc](https://github.com/grpc/grpc) repository at build time
+
+**References**:
+- [gRPC Health Checking Protocol](https://github.com/grpc/grpc/blob/master/doc/health-checking.md)
+- [gRPC Server Reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md)
+
+### Security Audit
+
+**Status**: Under Consideration
+
+A security audit would help identify vulnerabilities in the HTTP/2 and TLS implementations.
+
+**Options**:
+- [ ] Apply for free security audit programs (e.g., OSTIF, Linux Foundation)
+- [ ] Community security review
+- [ ] Document threat model and security considerations
+- [ ] Add security policy (SECURITY.md)
+
+**Areas of concern**:
+- HTTP/2 frame parsing and validation
+- HPACK decompression (potential for compression bombs)
+- TLS configuration defaults
+- Input validation on gRPC messages
+
 ## Completed
 
 - [x] Core gRPC server implementation
