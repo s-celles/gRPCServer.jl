@@ -69,6 +69,9 @@ include("dispatch.jl")
 include("proto/grpc/health/v1/health_pb.jl")
 include("proto/grpc/reflection/v1alpha/reflection_pb.jl")
 
+# 8b. Proto descriptors (compiled .pb files for reflection service)
+include("proto/descriptors.jl")
+
 # 9. Main server (depends on everything above including proto types)
 include("server.jl")
 
@@ -125,6 +128,10 @@ export remaining_time, is_cancelled
 
 # Compression functions
 export compress, decompress, codec_name, parse_codec, negotiate_compression
+
+# Proto Descriptors (for reflection service)
+export HEALTH_DESCRIPTOR, REFLECTION_DESCRIPTOR
+export has_health_descriptor, has_reflection_descriptor
 
 # Precompilation workload for faster time-to-first-execution
 @compile_workload begin

@@ -83,12 +83,12 @@ service = ServiceDescriptor(
 struct ServiceDescriptor
     name::String
     methods::Dict{String, MethodDescriptor}
-    file_descriptor::Union{Vector{UInt8}, Nothing}
+    file_descriptor::Union{Vector{Vector{UInt8}}, Nothing}
 
     function ServiceDescriptor(
         name::String,
         methods::Dict{String, MethodDescriptor},
-        file_descriptor::Union{Vector{UInt8}, Nothing}=nothing
+        file_descriptor::Union{Vector{Vector{UInt8}}, Nothing}=nothing
     )
         new(name, methods, file_descriptor)
     end
@@ -397,79 +397,83 @@ function handle_exception_with_logging(e::Exception, ctx::ServerContext, debug_m
 end
 
 """
+    _type_registry
+
+Lazily initialized type registry mapping protobuf type names to Julia types.
+"""
+const _type_registry = Ref{Dict{String, Type}}()
+
+"""
+    get_type_registry() -> Dict{String, Type}
+
+Get the type registry, initializing it on first access.
+"""
+function get_type_registry()::Dict{String, Type}
+    if !isassigned(_type_registry)
+        # Initialize with known types - these are defined in the proto files
+        # which are included after dispatch.jl
+        _type_registry[] = Dict{String, Type}(
+            "grpc.health.v1.HealthCheckRequest" => HealthCheckRequest,
+            "grpc.health.v1.HealthCheckResponse" => HealthCheckResponse,
+            "grpc.reflection.v1alpha.ServerReflectionRequest" => ServerReflectionRequest,
+            "grpc.reflection.v1alpha.ServerReflectionResponse" => ServerReflectionResponse,
+        )
+    end
+    return _type_registry[]
+end
+
+"""
     deserialize_message(data::Vector{UInt8}, type_name::String) -> Any
 
-Deserialize a Protocol Buffer message from bytes.
+Deserialize a Protocol Buffer message from raw bytes.
+
+Note: The gRPC Length-Prefixed Message header (5 bytes) should already be stripped
+by the time this function is called. This function receives raw protobuf bytes.
 """
 function deserialize_message(data::Vector{UInt8}, type_name::String)
-    # Parse gRPC Length-Prefixed Message format
-    # Format: 1 byte compressed flag + 4 bytes message length + message
-    if length(data) < 5
-        throw(GRPCError(StatusCode.INVALID_ARGUMENT, "Message too short"))
+    # Look up the Julia type from the registry
+    julia_type = get(get_type_registry(), type_name, nothing)
+
+    if julia_type === nothing
+        # Unknown type - return raw bytes as fallback
+        @warn "Unknown protobuf type, returning raw bytes" type_name
+        return data
     end
 
-    compressed = data[1] != 0
-    msg_length = (UInt32(data[2]) << 24) | (UInt32(data[3]) << 16) |
-                 (UInt32(data[4]) << 8) | UInt32(data[5])
-
-    if length(data) < 5 + msg_length
-        throw(GRPCError(StatusCode.INVALID_ARGUMENT, "Message truncated"))
-    end
-
-    msg_data = data[6:(5 + msg_length)]
-
-    # Handle compression
-    if compressed
-        # Decompression would be handled here based on grpc-encoding header
-        throw(GRPCError(StatusCode.UNIMPLEMENTED, "Compressed messages not yet supported"))
-    end
-
-    # Deserialize using ProtoBuf
-    # The actual type resolution would need to be implemented based on the type registry
-    # For now, return the raw bytes - the actual implementation would use ProtoBuf.readproto
+    # Use ProtoBuf.jl to decode the message
     try
-        io = IOBuffer(msg_data)
-        # This is a placeholder - actual implementation needs type resolution
-        return msg_data
+        io = IOBuffer(data)
+        decoder = ProtoBuf.ProtoDecoder(io)
+        return ProtoBuf.decode(decoder, julia_type)
     catch e
-        throw(GRPCError(StatusCode.INVALID_ARGUMENT, "Failed to deserialize message: $(e)"))
+        throw(GRPCError(StatusCode.INVALID_ARGUMENT, "Failed to deserialize $type_name: $(sprint(showerror, e))"))
     end
 end
 
 """
     serialize_message(message) -> Vector{UInt8}
 
-Serialize a Protocol Buffer message to bytes in gRPC Length-Prefixed format.
+Serialize a Protocol Buffer message to raw bytes.
+
+Note: This returns raw protobuf bytes WITHOUT the gRPC Length-Prefixed header.
+The gRPC framing is added later by the transport layer (server.jl encode_grpc_message).
 """
 function serialize_message(message)::Vector{UInt8}
     # Serialize message using ProtoBuf
-    msg_io = IOBuffer()
-
-    # This is a placeholder - actual implementation would use ProtoBuf.writeproto
     if message isa Vector{UInt8}
-        msg_data = message
-    else
-        # Try to use ProtoBuf serialization
-        try
-            # writeproto(msg_io, message)
-            # msg_data = take!(msg_io)
-            # For now, just return empty
-            msg_data = UInt8[]
-        catch
-            msg_data = UInt8[]
-        end
+        return message
     end
 
-    # Build gRPC Length-Prefixed Message
-    result = Vector{UInt8}(undef, 5 + length(msg_data))
-    result[1] = 0  # Not compressed
-    result[2] = UInt8((length(msg_data) >> 24) & 0xFF)
-    result[3] = UInt8((length(msg_data) >> 16) & 0xFF)
-    result[4] = UInt8((length(msg_data) >> 8) & 0xFF)
-    result[5] = UInt8(length(msg_data) & 0xFF)
-    result[6:end] .= msg_data
-
-    return result
+    # Use ProtoBuf.jl to encode the message
+    try
+        msg_io = IOBuffer()
+        encoder = ProtoBuf.ProtoEncoder(msg_io)
+        ProtoBuf.encode(encoder, message)
+        return take!(msg_io)
+    catch e
+        @error "Failed to serialize message" exception=(e, catch_backtrace())
+        return UInt8[]
+    end
 end
 
 """

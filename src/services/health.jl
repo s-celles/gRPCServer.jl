@@ -82,6 +82,6 @@ function create_health_service(server)::ServiceDescriptor
                 (ctx, req, stream) -> health_watch(ctx, req, stream, get_health)
             )
         ),
-        nothing  # File descriptor for reflection (would be set from compiled proto)
+        HEALTH_DESCRIPTOR  # File descriptor for reflection (from compiled proto)
     )
 end

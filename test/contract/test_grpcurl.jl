@@ -210,12 +210,14 @@ end
     @testset "Reflection File Containing Symbol" begin
         handler = (ctx, req) -> req
 
+        # file_descriptor is now Vector{Vector{UInt8}} - a list of FileDescriptorProto bytes
+        fd_bytes = [UInt8[0x0a, 0x0b, 0x0c], UInt8[0x0d, 0x0e, 0x0f]]
         descriptor = ServiceDescriptor(
             "test.SymbolService",
             Dict(
                 "Method" => MethodDescriptor("Method", MethodType.UNARY, "Req", "Resp", handler)
             ),
-            UInt8[0x0a, 0x0b, 0x0c]  # Fake file descriptor
+            fd_bytes
         )
 
         with_test_server(enable_reflection=true) do ts
@@ -235,8 +237,9 @@ end
             @test response.message_response !== nothing
             @test response.message_response.name === :file_descriptor_response
             fd_resp = response.message_response[]
-            @test length(fd_resp.file_descriptor_proto) == 1
+            @test length(fd_resp.file_descriptor_proto) == 2
             @test fd_resp.file_descriptor_proto[1] == UInt8[0x0a, 0x0b, 0x0c]
+            @test fd_resp.file_descriptor_proto[2] == UInt8[0x0d, 0x0e, 0x0f]
         end
     end
 

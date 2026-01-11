@@ -60,7 +60,7 @@ function handle_reflection_request(
         # Look up service
         service = get_service(registry, symbol)
         if service !== nothing && service.file_descriptor !== nothing
-            fd_response = FileDescriptorResponse([service.file_descriptor])
+            fd_response = FileDescriptorResponse(service.file_descriptor)
             return ServerReflectionResponse(
                 request.host,
                 request,
@@ -83,7 +83,7 @@ function handle_reflection_request(
         for (_, service) in registry.services
             if service.file_descriptor !== nothing
                 # Would check filename in descriptor
-                fd_response = FileDescriptorResponse([service.file_descriptor])
+                fd_response = FileDescriptorResponse(service.file_descriptor)
                 return ServerReflectionResponse(
                     request.host,
                     request,
@@ -125,6 +125,6 @@ function create_reflection_service(registry::ServiceRegistry)::ServiceDescriptor
                 (ctx, stream) -> server_reflection_info(ctx, stream, registry)
             )
         ),
-        nothing  # File descriptor would be set from compiled proto
+        REFLECTION_DESCRIPTOR  # File descriptor from compiled proto
     )
 end

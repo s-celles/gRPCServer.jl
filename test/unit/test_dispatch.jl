@@ -38,8 +38,8 @@ using gRPCServer
         @test length(service.methods) == 2
         @test service.file_descriptor === nothing
 
-        # With file descriptor
-        fd = UInt8[0x0a, 0x0b]
+        # With file descriptor (now a Vector of Vector{UInt8})
+        fd = [UInt8[0x0a, 0x0b], UInt8[0x0c, 0x0d]]
         service2 = ServiceDescriptor("test.Service", methods, fd)
         @test service2.file_descriptor == fd
 
@@ -137,27 +137,25 @@ using gRPCServer
     end
 
     @testset "serialize_message" begin
-        # Raw bytes pass through
+        # Raw bytes pass through unchanged
         data = UInt8[0x01, 0x02, 0x03]
         result = gRPCServer.serialize_message(data)
 
-        # Should have 5-byte header + data
-        @test length(result) == 5 + 3
-        @test result[1] == 0  # Not compressed
-        @test result[6:8] == data
+        # serialize_message now returns raw protobuf bytes (no Length-Prefixed header)
+        # The gRPC framing is added by server.jl encode_grpc_message
+        @test result == data
     end
 
     @testset "deserialize_message" begin
-        # Too short
-        @test_throws GRPCError gRPCServer.deserialize_message(UInt8[0x00, 0x00], "test.Type")
+        # Unknown type returns raw bytes (with warning)
+        data = UInt8[0x01, 0x02, 0x03]
+        result = gRPCServer.deserialize_message(data, "test.UnknownType")
+        @test result == data
 
-        # Valid message (uncompressed, length 3, data [1,2,3])
-        data = UInt8[0x00, 0x00, 0x00, 0x00, 0x03, 0x01, 0x02, 0x03]
-        result = gRPCServer.deserialize_message(data, "test.Type")
-        @test result == UInt8[0x01, 0x02, 0x03]
-
-        # Truncated message
-        short_data = UInt8[0x00, 0x00, 0x00, 0x00, 0x05, 0x01, 0x02]  # Claims 5 bytes, only 2
-        @test_throws GRPCError gRPCServer.deserialize_message(short_data, "test.Type")
+        # Empty message is valid for known types
+        empty_data = UInt8[]
+        result = gRPCServer.deserialize_message(empty_data, "grpc.health.v1.HealthCheckRequest")
+        @test result isa HealthCheckRequest
+        @test result.service == ""
     end
 end

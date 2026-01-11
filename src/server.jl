@@ -924,8 +924,8 @@ function handle_reflection_request_raw(data::Vector{UInt8}, registry::ServiceReg
     elseif request.message_request !== nothing && request.message_request.name === :file_containing_symbol
         symbol = request.message_request[]::String
         service = get_service(registry, symbol)
-        if service !== nothing && service.file_descriptor !== nothing
-            fd_response = FileDescriptorResponse([service.file_descriptor])
+        if service !== nothing && service.file_descriptor !== nothing && !isempty(service.file_descriptor)
+            fd_response = FileDescriptorResponse(service.file_descriptor)
             ServerReflectionResponse(
                 request.host,
                 request,
