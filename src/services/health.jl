@@ -1,26 +1,12 @@
 # gRPC Health Checking Service for gRPCServer.jl
 # Per https://github.com/grpc/grpc/blob/master/doc/health-checking.md
 
-"""
-    HealthCheckRequest
+# Note: HealthCheckRequest and HealthCheckResponse are defined in
+# proto/grpc/health/v1/health_pb.jl (protobuf-generated types)
 
-Request message for health check.
-"""
-struct HealthCheckRequest
-    service::String
-
-    HealthCheckRequest(; service::String="") = new(service)
-end
-
-"""
-    HealthCheckResponse
-
-Response message for health check.
-"""
-struct HealthCheckResponse
-    status::HealthStatus.T
-
-    HealthCheckResponse(; status::HealthStatus.T=HealthStatus.UNKNOWN) = new(status)
+# Helper to convert HealthStatus.T to protobuf ServingStatus
+function _to_serving_status(status::HealthStatus.T)
+    return var"HealthCheckResponse.ServingStatus".T(Int(status))
 end
 
 """
@@ -41,7 +27,7 @@ Handle Health.Check unary RPC.
 """
 function health_check(ctx::ServerContext, request::HealthCheckRequest, get_health::Function)::HealthCheckResponse
     status = get_health(request.service)
-    return HealthCheckResponse(status=status)
+    return HealthCheckResponse(_to_serving_status(status))
 end
 
 """
@@ -62,7 +48,7 @@ function health_watch(
         current_status = get_health(request.service)
 
         if current_status != last_status
-            send!(stream, HealthCheckResponse(status=current_status))
+            send!(stream, HealthCheckResponse(_to_serving_status(current_status)))
             last_status = current_status
         end
 

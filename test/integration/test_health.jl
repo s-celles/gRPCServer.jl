@@ -52,19 +52,24 @@ using gRPCServer
     end
 
     @testset "HealthCheckRequest/Response Types" begin
+        # Protobuf-generated types use positional constructors
+        ServingStatus = gRPCServer.var"HealthCheckResponse.ServingStatus"
+
         # Test request type
-        req = gRPCServer.HealthCheckRequest(service="my.Service")
+        req = gRPCServer.HealthCheckRequest("my.Service")
         @test req.service == "my.Service"
 
-        req_empty = gRPCServer.HealthCheckRequest()
+        req_empty = gRPCServer.HealthCheckRequest("")
         @test req_empty.service == ""
 
-        # Test response type
-        resp = gRPCServer.HealthCheckResponse(status=HealthStatus.SERVING)
-        @test resp.status == HealthStatus.SERVING
+        # Test response type (uses protobuf ServingStatus enum)
+        resp = gRPCServer.HealthCheckResponse(ServingStatus.SERVING)
+        @test resp.status == ServingStatus.SERVING
     end
 
     @testset "Health Check Handler" begin
+        ServingStatus = gRPCServer.var"HealthCheckResponse.ServingStatus"
+
         health_status = Dict{String, HealthStatus.T}(
             "" => HealthStatus.SERVING,
             "my.Service" => HealthStatus.NOT_SERVING
@@ -73,20 +78,20 @@ using gRPCServer
         get_health_fn = (service) -> get(health_status, service, HealthStatus.SERVICE_UNKNOWN)
 
         # Check overall health
-        req = gRPCServer.HealthCheckRequest()
+        req = gRPCServer.HealthCheckRequest("")
         ctx = ServerContext()
         resp = gRPCServer.health_check(ctx, req, get_health_fn)
-        @test resp.status == HealthStatus.SERVING
+        @test resp.status == ServingStatus.SERVING
 
         # Check specific service
-        req2 = gRPCServer.HealthCheckRequest(service="my.Service")
+        req2 = gRPCServer.HealthCheckRequest("my.Service")
         resp2 = gRPCServer.health_check(ctx, req2, get_health_fn)
-        @test resp2.status == HealthStatus.NOT_SERVING
+        @test resp2.status == ServingStatus.NOT_SERVING
 
         # Check unknown service
-        req3 = gRPCServer.HealthCheckRequest(service="unknown.Service")
+        req3 = gRPCServer.HealthCheckRequest("unknown.Service")
         resp3 = gRPCServer.health_check(ctx, req3, get_health_fn)
-        @test resp3.status == HealthStatus.SERVICE_UNKNOWN
+        @test resp3.status == ServingStatus.SERVICE_UNKNOWN
     end
 
     @testset "Health Check Method Resolution" begin
