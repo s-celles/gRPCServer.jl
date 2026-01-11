@@ -4,9 +4,11 @@
 using Test
 using gRPCServer
 using Sockets
+using ProtoBuf: OneOf
 
 # Include test utilities
-include("../integration/test_utils.jl")
+# TestUtils is included once in runtests.jl to avoid method redefinition warnings
+# using TestUtils is inherited from the parent module
 
 # Check if grpcurl is available
 const GRPCURL_AVAILABLE = try
@@ -40,7 +42,8 @@ end
             nothing
         )
 
-        with_test_server(enable_reflection=true, port=50150) do ts
+        # Use dynamic port to avoid conflicts
+        with_test_server(enable_reflection=true) do ts
             # Register test service
             gRPCServer.register_service!(ts.server.dispatcher, descriptor)
             ts.server.health_status["test.GreeterService"] = HealthStatus.SERVING
@@ -50,7 +53,7 @@ end
 
             # Try to list services using grpcurl
             try
-                result = read(`grpcurl -plaintext localhost:50150 list`, String)
+                result = read(`grpcurl -plaintext localhost:$(ts.port) list`, String)
 
                 # Should list the reflection service
                 @test occursin("grpc.reflection", result) || occursin("ServerReflection", result)
@@ -67,13 +70,13 @@ end
     end
 
     @testset "grpcurl Connection Test" begin
-        with_test_server(enable_reflection=true, port=50151) do ts
+        with_test_server(enable_reflection=true) do ts
             sleep(0.5)
 
             # Test basic connection (even if reflection fails)
             try
                 # Try to connect - may fail with protocol error
-                run(`grpcurl -plaintext -connect-timeout 2 localhost:50151 list`)
+                run(`grpcurl -plaintext -connect-timeout 2 localhost:$(ts.port) list`)
                 @test true  # Connection succeeded
             catch e
                 # Expected: partial HTTP/2 implementation
@@ -85,12 +88,12 @@ end
 
     @testset "Server Accepts TCP Connections for grpcurl" begin
         # Even without full HTTP/2, server should accept TCP connections
-        with_test_server(enable_reflection=true, port=50152) do ts
+        with_test_server(enable_reflection=true) do ts
             sleep(0.3)
 
             # Verify server is listening
             try
-                sock = connect("localhost", 50152)
+                sock = connect("localhost", ts.port)
                 @test isopen(sock)
                 close(sock)
             catch e
@@ -131,7 +134,7 @@ end
     end
 
     @testset "Health Service with Reflection" begin
-        with_test_server(enable_reflection=true, enable_health_check=true, port=50153) do ts
+        with_test_server(enable_reflection=true, enable_health_check=true) do ts
             sleep(0.3)
 
             # Both services should be registered
@@ -182,10 +185,10 @@ end
 
     @testset "Reflection Request Handling" begin
         with_test_server(enable_reflection=true) do ts
-            # Create a list_services request
+            # Create a list_services request using proto-generated types
             request = gRPCServer.ServerReflectionRequest(
-                host="localhost",
-                list_services=""
+                "localhost",
+                OneOf(:list_services, "*")
             )
 
             # Handle the request
@@ -194,11 +197,12 @@ end
                 ts.server.dispatcher.registry
             )
 
-            @test response.list_services_response !== nothing
-            @test response.error_response === nothing
+            @test response.message_response !== nothing
+            @test response.message_response.name === :list_services_response
 
+            list_resp = response.message_response[]
             # Should list reflection service
-            service_names = [s.name for s in response.list_services_response.service]
+            service_names = [s.name for s in list_resp.service]
             @test "grpc.reflection.v1alpha.ServerReflection" in service_names
         end
     end
@@ -217,10 +221,10 @@ end
         with_test_server(enable_reflection=true) do ts
             gRPCServer.register_service!(ts.server.dispatcher, descriptor)
 
-            # Request file containing symbol
+            # Request file containing symbol using proto-generated types
             request = gRPCServer.ServerReflectionRequest(
-                host="localhost",
-                file_containing_symbol="test.SymbolService"
+                "localhost",
+                OneOf(:file_containing_symbol, "test.SymbolService")
             )
 
             response = gRPCServer.handle_reflection_request(
@@ -228,17 +232,19 @@ end
                 ts.server.dispatcher.registry
             )
 
-            @test response.file_descriptor_response !== nothing
-            @test length(response.file_descriptor_response) == 1
-            @test response.file_descriptor_response[1] == UInt8[0x0a, 0x0b, 0x0c]
+            @test response.message_response !== nothing
+            @test response.message_response.name === :file_descriptor_response
+            fd_resp = response.message_response[]
+            @test length(fd_resp.file_descriptor_proto) == 1
+            @test fd_resp.file_descriptor_proto[1] == UInt8[0x0a, 0x0b, 0x0c]
         end
     end
 
     @testset "Reflection Unknown Symbol" begin
         with_test_server(enable_reflection=true) do ts
             request = gRPCServer.ServerReflectionRequest(
-                host="localhost",
-                file_containing_symbol="unknown.NonExistentService"
+                "localhost",
+                OneOf(:file_containing_symbol, "unknown.NonExistentService")
             )
 
             response = gRPCServer.handle_reflection_request(
@@ -246,8 +252,9 @@ end
                 ts.server.dispatcher.registry
             )
 
-            @test response.error_response !== nothing
-            @test occursin("not found", lowercase(response.error_response))
+            @test response.message_response !== nothing
+            @test response.message_response.name === :error_response
+            @test occursin("not found", lowercase(response.message_response[].error_message))
         end
     end
 end

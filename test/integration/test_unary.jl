@@ -5,7 +5,8 @@ using Test
 using gRPCServer
 using Sockets
 
-include("test_utils.jl")
+# TestUtils is included once in runtests.jl to avoid method redefinition warnings
+# using TestUtils is inherited from the parent module
 
 @testset "Unary RPC Integration Tests" begin
     @testset "Basic Connection" begin

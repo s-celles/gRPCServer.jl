@@ -1,6 +1,10 @@
 using Test
 using gRPCServer
 
+# Include TestUtils module once for all tests to avoid method redefinition warnings
+include("TestUtils.jl")
+using .TestUtils
+
 @testset "gRPCServer.jl" begin
     # Aqua.jl quality checks
     include("aqua.jl")

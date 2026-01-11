@@ -2,25 +2,28 @@
 
 using Test
 using gRPCServer
+using ProtoBuf: OneOf
 
 @testset "Reflection Service Unit Tests" begin
     @testset "ServerReflectionRequest Creation" begin
-        # Default request
-        req = gRPCServer.ServerReflectionRequest()
+        # Default request (with nothing message_request)
+        req = gRPCServer.ServerReflectionRequest("", nothing)
         @test req.host == ""
-        @test req.file_by_filename === nothing
-        @test req.file_containing_symbol === nothing
-        @test req.list_services === nothing
+        @test req.message_request === nothing
 
         # List services request
-        req_list = gRPCServer.ServerReflectionRequest(list_services="")
-        @test req_list.list_services == ""
+        req_list = gRPCServer.ServerReflectionRequest("", OneOf(:list_services, ""))
+        @test req_list.message_request !== nothing
+        @test req_list.message_request.name === :list_services
 
         # File containing symbol request
         req_symbol = gRPCServer.ServerReflectionRequest(
-            file_containing_symbol="my.Service"
+            "",
+            OneOf(:file_containing_symbol, "my.Service")
         )
-        @test req_symbol.file_containing_symbol == "my.Service"
+        @test req_symbol.message_request !== nothing
+        @test req_symbol.message_request.name === :file_containing_symbol
+        @test req_symbol.message_request[] == "my.Service"
     end
 
     @testset "ServiceResponse Creation" begin
@@ -40,27 +43,31 @@ using gRPCServer
     end
 
     @testset "ServerReflectionResponse Creation" begin
-        req = gRPCServer.ServerReflectionRequest(host="localhost")
+        req = gRPCServer.ServerReflectionRequest("localhost", nothing)
 
         # List services response
+        list_services_resp = gRPCServer.ListServiceResponse([
+            gRPCServer.ServiceResponse("test.Service")
+        ])
         resp = gRPCServer.ServerReflectionResponse(
-            valid_host="localhost",
-            original_request=req,
-            list_services_response=gRPCServer.ListServiceResponse([
-                gRPCServer.ServiceResponse("test.Service")
-            ])
+            "localhost",
+            req,
+            OneOf(:list_services_response, list_services_resp)
         )
         @test resp.valid_host == "localhost"
-        @test resp.list_services_response !== nothing
-        @test resp.error_response === nothing
+        @test resp.message_response !== nothing
+        @test resp.message_response.name === :list_services_response
 
         # Error response
+        err = gRPCServer.ErrorResponse(Int32(5), "Symbol not found")
         err_resp = gRPCServer.ServerReflectionResponse(
-            valid_host="localhost",
-            original_request=req,
-            error_response="Symbol not found"
+            "localhost",
+            req,
+            OneOf(:error_response, err)
         )
-        @test err_resp.error_response == "Symbol not found"
+        @test err_resp.message_response !== nothing
+        @test err_resp.message_response.name === :error_response
+        @test err_resp.message_response[].error_message == "Symbol not found"
     end
 
     @testset "ReflectionService Creation" begin
@@ -93,14 +100,16 @@ using gRPCServer
         gRPCServer.register!(registry, descriptor)
 
         # Create list services request
-        req = gRPCServer.ServerReflectionRequest(list_services="")
+        req = gRPCServer.ServerReflectionRequest("", OneOf(:list_services, "*"))
         resp = gRPCServer.handle_reflection_request(req, registry)
 
-        @test resp.list_services_response !== nothing
-        @test length(resp.list_services_response.service) >= 1
+        @test resp.message_response !== nothing
+        @test resp.message_response.name === :list_services_response
+        list_resp = resp.message_response[]
+        @test length(list_resp.service) >= 1
 
         # Find our test service in the response
-        service_names = [s.name for s in resp.list_services_response.service]
+        service_names = [s.name for s in list_resp.service]
         @test "test.TestService" in service_names
     end
 
@@ -109,12 +118,14 @@ using gRPCServer
         registry = server.dispatcher.registry
 
         req = gRPCServer.ServerReflectionRequest(
-            file_containing_symbol="nonexistent.Service"
+            "",
+            OneOf(:file_containing_symbol, "nonexistent.Service")
         )
         resp = gRPCServer.handle_reflection_request(req, registry)
 
-        @test resp.error_response !== nothing
-        @test occursin("not found", resp.error_response)
+        @test resp.message_response !== nothing
+        @test resp.message_response.name === :error_response
+        @test occursin("not found", resp.message_response[].error_message)
     end
 
     @testset "handle_reflection_request - unknown request type" begin
@@ -122,11 +133,12 @@ using gRPCServer
         registry = server.dispatcher.registry
 
         # Empty request (no specific request type)
-        req = gRPCServer.ServerReflectionRequest()
+        req = gRPCServer.ServerReflectionRequest("", nothing)
         resp = gRPCServer.handle_reflection_request(req, registry)
 
-        @test resp.error_response !== nothing
-        @test occursin("Unknown", resp.error_response)
+        @test resp.message_response !== nothing
+        @test resp.message_response.name === :error_response
+        @test occursin("Unknown", resp.message_response[].error_message)
     end
 
     @testset "create_reflection_service" begin

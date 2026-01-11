@@ -65,15 +65,19 @@ include("interceptors.jl")
 # 7. Dispatch (depends on interceptors, context, errors)
 include("dispatch.jl")
 
-# 8. Main server (depends on everything above)
+# 8. Proto definitions (needed before server.jl for reflection handling)
+include("proto/grpc/health/v1/health_pb.jl")
+include("proto/grpc/reflection/v1alpha/reflection_pb.jl")
+
+# 9. Main server (depends on everything above including proto types)
 include("server.jl")
 
-# 9. TLS implementation (optional, depends on server, config)
+# 10. TLS implementation (optional, depends on server, config)
 include("tls/config.jl")
 include("tls/alpn.jl")
 include("tls/reload.jl")
 
-# 10. Built-in services (depend on server, dispatch)
+# 11. Built-in services (depend on server, dispatch)
 include("services/health.jl")
 include("services/reflection.jl")
 

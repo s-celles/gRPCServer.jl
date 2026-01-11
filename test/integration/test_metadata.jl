@@ -5,7 +5,8 @@ using Test
 using gRPCServer
 using Dates
 
-include("test_utils.jl")
+# TestUtils is included once in runtests.jl to avoid method redefinition warnings
+# using TestUtils is inherited from the parent module
 
 @testset "Metadata Integration Tests" begin
     @testset "Request Metadata Access" begin

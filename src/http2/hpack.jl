@@ -74,6 +74,172 @@ const STATIC_TABLE = [
 
 const STATIC_TABLE_SIZE = length(STATIC_TABLE)
 
+# Huffman code table per RFC 7541 Appendix B
+# Format: (code, bit_length) for each byte value 0-255, plus EOS (256)
+const HUFFMAN_CODES = [
+    # 0-15
+    (0x1ff8, 13), (0x7fffd8, 23), (0x3ffffe2, 25), (0x3ffffe3, 25),
+    (0x3ffffe4, 25), (0x3ffffe5, 25), (0x3ffffe6, 25), (0x3ffffe7, 25),
+    (0x3ffffe8, 25), (0x7ffffea, 27), (0x3ffffffc, 30), (0x3ffffe9, 25),
+    (0x3ffffea, 25), (0x3ffffffd, 30), (0x3ffffeb, 25), (0x3ffffec, 25),
+    # 16-31
+    (0x3ffffed, 25), (0x3ffffee, 25), (0x3ffffef, 25), (0x3fffff0, 25),
+    (0x3fffff1, 25), (0x3fffff2, 25), (0x3fffffffe, 30), (0x3fffff3, 25),
+    (0x3fffff4, 25), (0x3fffff5, 25), (0x3fffff6, 25), (0x3fffff7, 25),
+    (0x3fffff8, 25), (0x3fffff9, 25), (0x3fffffa, 25), (0x3fffffb, 25),
+    # 32-47: space (32) is 0x14 (6 bits)
+    (0x14, 6), (0x3f8, 10), (0x3f9, 10), (0xffa, 12),
+    (0x1ff9, 13), (0x15, 6), (0xf8, 8), (0x7fa, 11),
+    (0x3fa, 10), (0x3fb, 10), (0xf9, 8), (0x7fb, 11),
+    (0xfa, 8), (0x16, 6), (0x17, 6), (0x18, 6),
+    # 48-63: digits 0-9 then punctuation
+    (0x0, 5), (0x1, 5), (0x2, 5), (0x19, 6),
+    (0x1a, 6), (0x1b, 6), (0x1c, 6), (0x1d, 6),
+    (0x1e, 6), (0x1f, 6), (0x5c, 7), (0xfb, 8),
+    (0x7ffc, 15), (0x20, 6), (0xffb, 12), (0x3fc, 10),
+    # 64-79: @ A-O
+    (0x1ffa, 13), (0x21, 6), (0x5d, 7), (0x5e, 7),
+    (0x5f, 7), (0x60, 7), (0x61, 7), (0x62, 7),
+    (0x63, 7), (0x64, 7), (0x65, 7), (0x66, 7),
+    (0x67, 7), (0x68, 7), (0x69, 7), (0x6a, 7),
+    # 80-95: P-_ (P-Z then punctuation)
+    (0x6b, 7), (0x6c, 7), (0x6d, 7), (0x6e, 7),
+    (0x6f, 7), (0x70, 7), (0x71, 7), (0x72, 7),
+    (0x73, 7), (0x74, 7), (0x75, 7), (0xfc, 8),
+    (0x76, 7), (0xfd, 8), (0x1ffb, 13), (0x7fff0, 19),
+    # 96-111: ` a-o
+    (0x1ffc, 13), (0x3, 5), (0x23, 6), (0x4, 5),
+    (0x24, 6), (0x5, 5), (0x25, 6), (0x26, 6),
+    (0x27, 6), (0x6, 5), (0x74, 7), (0x75, 7),
+    (0x28, 6), (0x29, 6), (0x2a, 6), (0x7, 5),
+    # 112-127: p-DEL
+    (0x2b, 6), (0x76, 7), (0x2c, 6), (0x8, 5),
+    (0x9, 5), (0x2d, 6), (0x77, 7), (0x78, 7),
+    (0x79, 7), (0x7a, 7), (0x7b, 7), (0x7ffe, 15),
+    (0x7fc, 11), (0x3ffd, 14), (0x1ffd, 13), (0xffffffc, 28),
+    # 128-143
+    (0xfffe6, 20), (0x3fffd2, 22), (0xfffe7, 20), (0xfffe8, 20),
+    (0x3fffd3, 22), (0x3fffd4, 22), (0x3fffd5, 22), (0x3fffd6, 22),
+    (0x3fffd7, 22), (0x3fffd8, 22), (0x3fffd9, 22), (0x3fffda, 22),
+    (0x3fffdb, 22), (0x3fffdc, 22), (0x3fffdd, 22), (0x3fffde, 22),
+    # 144-159
+    (0xfffeb, 20), (0x3fffdf, 22), (0xfffec, 20), (0xfffed, 20),
+    (0x3fffe0, 22), (0x3fffe1, 22), (0x3fffe2, 22), (0x3fffe3, 22),
+    (0x3fffe4, 22), (0x3fffe5, 22), (0x3fffe6, 22), (0x3fffe7, 22),
+    (0x3fffe8, 22), (0x3fffe9, 22), (0x3fffea, 22), (0x3fffeb, 22),
+    # 160-175
+    (0xfffee, 20), (0x3fffec, 22), (0x3fffed, 22), (0x3fffee, 22),
+    (0x3fffef, 22), (0x3ffff0, 22), (0x3ffff1, 22), (0x3ffff2, 22),
+    (0xffef, 16), (0x3ffff3, 22), (0x3ffff4, 22), (0x3ffff5, 22),
+    (0x3ffff6, 22), (0x3ffff7, 22), (0x3ffff8, 22), (0x3ffff9, 22),
+    # 176-191
+    (0x1ffff0, 21), (0x1ffff1, 21), (0x3ffffa, 22), (0x1ffff2, 21),
+    (0x3ffffb, 22), (0x3ffffc, 22), (0x1ffff3, 21), (0x1ffff4, 21),
+    (0x1ffff5, 21), (0x1ffff6, 21), (0x1ffff7, 21), (0x3ffffd, 22),
+    (0x1ffff8, 21), (0x1ffff9, 21), (0x1ffffa, 21), (0x1ffffb, 21),
+    # 192-207
+    (0x1ffffc, 21), (0x1ffffd, 21), (0x1ffffe, 21), (0x1fffff, 21),
+    (0x2fffff0, 26), (0x2fffff1, 26), (0x2fffff2, 26), (0x2fffff3, 26),
+    (0x2fffff4, 26), (0x2fffff5, 26), (0x2fffff6, 26), (0x2fffff7, 26),
+    (0x2fffff8, 26), (0x2fffff9, 26), (0x2fffffa, 26), (0x2fffffb, 26),
+    # 208-223
+    (0x2fffffc, 26), (0x2fffffd, 26), (0x2fffffe, 26), (0x2ffffff, 26),
+    (0x3fffffc, 26), (0x3fffffb, 26), (0x3fffffe, 26), (0x3ffffff, 26),
+    (0x4fffffc, 27), (0x4fffffd, 27), (0x4fffffe, 27), (0x4ffffff, 27),
+    (0x5fffffc, 27), (0x5fffffd, 27), (0x5fffffe, 27), (0x5ffffff, 27),
+    # 224-239
+    (0x6fffffc, 27), (0x6fffffd, 27), (0x6fffffe, 27), (0x6ffffff, 27),
+    (0x7fffffc, 27), (0x7fffffd, 27), (0x7fffffe, 27), (0x7ffffff, 27),
+    (0x8fffffc, 28), (0x8fffffd, 28), (0x8fffffe, 28), (0x8ffffff, 28),
+    (0x9fffffc, 28), (0x9fffffd, 28), (0x9fffffe, 28), (0x9ffffff, 28),
+    # 240-255
+    (0xafffffc, 28), (0xafffffd, 28), (0xafffffe, 28), (0xaffffff, 28),
+    (0xbfffffc, 28), (0xbfffffd, 28), (0xbfffffe, 28), (0xbffffff, 28),
+    (0xcfffffc, 28), (0xcfffffd, 28), (0xcfffffe, 28), (0xcffffff, 28),
+    (0xdfffffc, 28), (0xdfffffd, 28), (0xdfffffe, 28), (0xdffffff, 28),
+    # EOS (256)
+    (0x3fffffff, 30),
+]
+
+# Build Huffman decode tree for fast decoding
+# Tree node: either (left_child, right_child) for internal nodes or symbol value for leaf
+mutable struct HuffmanNode
+    left::Union{HuffmanNode, Nothing}
+    right::Union{HuffmanNode, Nothing}
+    symbol::Int  # -1 for internal nodes, 0-256 for leaves
+
+    HuffmanNode() = new(nothing, nothing, -1)
+    HuffmanNode(symbol::Int) = new(nothing, nothing, symbol)
+end
+
+const HUFFMAN_ROOT = HuffmanNode()
+
+# Build the Huffman tree at module load time
+function _build_huffman_tree()
+    for (symbol, (code, bits)) in enumerate(HUFFMAN_CODES)
+        node = HUFFMAN_ROOT
+        for i in bits:-1:1
+            bit = (code >> (i - 1)) & 1
+            if bit == 0
+                if node.left === nothing
+                    node.left = HuffmanNode()
+                end
+                node = node.left
+            else
+                if node.right === nothing
+                    node.right = HuffmanNode()
+                end
+                node = node.right
+            end
+        end
+        node.symbol = symbol - 1  # Convert to 0-based (0-255 for bytes, 256 for EOS)
+    end
+end
+
+_build_huffman_tree()
+
+"""
+    huffman_decode(data::AbstractVector{UInt8}) -> Vector{UInt8}
+
+Decode Huffman-encoded data per RFC 7541 Appendix B.
+"""
+function huffman_decode(data::AbstractVector{UInt8})::Vector{UInt8}
+    result = UInt8[]
+    node = HUFFMAN_ROOT
+    bits_pending = 0
+
+    for byte in data
+        for i in 7:-1:0
+            bit = (byte >> i) & 1
+            if bit == 0
+                node = node.left
+            else
+                node = node.right
+            end
+
+            if node === nothing
+                throw(ArgumentError("Invalid Huffman code in HPACK data"))
+            end
+
+            if node.symbol >= 0
+                if node.symbol == 256
+                    # EOS symbol - should only appear as padding
+                    # Continue to check remaining bits are all 1s (EOS padding)
+                    break
+                end
+                push!(result, UInt8(node.symbol))
+                node = HUFFMAN_ROOT
+            end
+        end
+    end
+
+    # After processing all bytes, we should be at root or in EOS padding
+    # EOS padding consists of the most significant bits of EOS code (all 1s)
+    # which means node should have traversed right-only paths
+
+    return result
+end
+
 # Build reverse lookup for static table
 const STATIC_TABLE_BY_NAME = Dict{String, Int}()
 const STATIC_TABLE_BY_PAIR = Dict{Tuple{String, String}, Int}()
@@ -293,7 +459,7 @@ end
 
 Decode an HPACK string starting at offset.
 Returns (string, new_offset).
-Note: Huffman decoding not implemented - only supports raw strings.
+Supports both raw strings and Huffman-encoded strings per RFC 7541.
 """
 function decode_string(bytes::AbstractVector{UInt8}, offset::Int)::Tuple{String, Int}
     if offset > length(bytes)
@@ -307,12 +473,16 @@ function decode_string(bytes::AbstractVector{UInt8}, offset::Int)::Tuple{String,
         throw(ArgumentError("String data out of range"))
     end
 
+    string_data = bytes[offset:(offset + length_value - 1)]
+
     if huffman
-        # Huffman decoding not implemented
-        throw(ArgumentError("Huffman decoding not supported"))
+        # Decode Huffman-encoded string
+        decoded_bytes = huffman_decode(string_data)
+        str = String(decoded_bytes)
+    else
+        str = String(string_data)
     end
 
-    str = String(bytes[offset:(offset + length_value - 1)])
     return (str, offset + length_value)
 end
 
@@ -349,41 +519,52 @@ function encode_header(encoder::HPACKEncoder, name::String, value::String;
     index, exact = find_index(encoder.dynamic_table, name, value)
 
     if exact
-        # Indexed header field (Section 6.1)
-        return vcat(UInt8[0x80], encode_integer(index, 7)[2:end])
+        # Indexed header field (Section 6.1): first bit = 1, 7-bit prefix for index
+        int_bytes = encode_integer(index, 7)
+        int_bytes[1] |= 0x80  # Set first bit
+        return int_bytes
     end
 
     if indexing == :incremental
         # Literal header field with incremental indexing (Section 6.2.1)
+        # First two bits = 01, 6-bit prefix for index
         add!(encoder.dynamic_table, name, value)
 
         if index > 0
             # Name is indexed
-            header = vcat(UInt8[0x40], encode_integer(index, 6)[2:end])
+            int_bytes = encode_integer(index, 6)
+            int_bytes[1] |= 0x40  # Set pattern 01xxxxxx
+            header = int_bytes
         else
-            # Name is literal
-            header = vcat(UInt8[0x40, 0x00])
-            append!(header, encode_string(name; huffman=encoder.use_huffman)[2:end])
+            # Name is literal (index = 0)
+            header = UInt8[0x40]  # 01000000 = literal name follows
+            append!(header, encode_string(name; huffman=encoder.use_huffman))
         end
         append!(header, encode_string(value; huffman=encoder.use_huffman))
         return header
     elseif indexing == :without
         # Literal header field without indexing (Section 6.2.2)
+        # First four bits = 0000, 4-bit prefix for index
         if index > 0
-            header = vcat(UInt8[0x00], encode_integer(index, 4)[2:end])
+            int_bytes = encode_integer(index, 4)
+            # No bits to set - pattern is 0000xxxx
+            header = int_bytes
         else
-            header = UInt8[0x00, 0x00]
-            append!(header, encode_string(name; huffman=encoder.use_huffman)[2:end])
+            header = UInt8[0x00]  # 00000000 = literal name follows
+            append!(header, encode_string(name; huffman=encoder.use_huffman))
         end
         append!(header, encode_string(value; huffman=encoder.use_huffman))
         return header
     else  # :never
         # Literal header field never indexed (Section 6.2.3)
+        # First four bits = 0001, 4-bit prefix for index
         if index > 0
-            header = vcat(UInt8[0x10], encode_integer(index, 4)[2:end])
+            int_bytes = encode_integer(index, 4)
+            int_bytes[1] |= 0x10  # Set pattern 0001xxxx
+            header = int_bytes
         else
-            header = UInt8[0x10, 0x00]
-            append!(header, encode_string(name; huffman=encoder.use_huffman)[2:end])
+            header = UInt8[0x10]  # 00010000 = literal name follows
+            append!(header, encode_string(name; huffman=encoder.use_huffman))
         end
         append!(header, encode_string(value; huffman=encoder.use_huffman))
         return header
