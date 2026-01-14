@@ -16,6 +16,8 @@ Pkg.add("gRPCServer")
 
 ## Step 1: Define Your Service
 
+This example is available in `examples/hello_world`.
+
 Create a `.proto` file defining your service:
 
 ```protobuf
@@ -50,13 +52,13 @@ using ProtoBuf
 protojl("greeter.proto", ".", "generated")
 ```
 
-This creates `generated/helloworld.jl` with `HelloRequest` and `HelloReply` structs.
+This creates `generated/helloworld/helloworld.jl` with `HelloRequest` and `HelloReply` structs.
 
 ## Step 3: Implement Handlers
 
 ```julia
 using gRPCServer
-include("generated/helloworld.jl")
+include("generated/helloworld/helloworld.jl")
 using .helloworld
 
 # Unary RPC handler
@@ -113,13 +115,15 @@ end
 
 ```julia
 # Create server
-server = GRPCServer("0.0.0.0", 50051)
+host = "127.0.0.1"
+port = 50051
+server = GRPCServer(host, port)
 
 # Register service
 register!(server, GreeterService())
 
 # Start server (blocking)
-@info "Starting gRPC server on port 50051..."
+@info "Starting gRPC server" host=host port=port
 run(server)
 ```
 
@@ -131,7 +135,7 @@ Save as `server.jl`:
 using gRPCServer
 
 # Include generated types
-include("generated/helloworld.jl")
+include("generated/helloworld/helloworld.jl")
 using .helloworld
 
 # Handlers
@@ -180,14 +184,16 @@ end
 
 # Run server
 function main()
-    server = GRPCServer("0.0.0.0", 50051;
+    host = "127.0.0.1"  # 0.0.0.0 (risky)
+    port = 50051
+    server = GRPCServer(host, port;
         enable_health_check = true,
         enable_reflection = true
     )
 
     register!(server, GreeterService())
 
-    @info "gRPC server starting" host="0.0.0.0" port=50051
+    @info "gRPC server starting" host=host port=port
     run(server)
 end
 
@@ -253,6 +259,8 @@ add_interceptor!(server, MetricsInterceptor(
 ## Enabling TLS
 
 ```julia
+host = "127.0.0.1"
+port = 50051
 tls_config = TLSConfig(
     cert_chain = "/path/to/server.crt",
     private_key = "/path/to/server.key",
@@ -261,7 +269,7 @@ tls_config = TLSConfig(
     min_version = :TLSv1_2
 )
 
-server = GRPCServer("0.0.0.0", 50051;
+server = GRPCServer(host, port;
     tls = tls_config
 )
 ```

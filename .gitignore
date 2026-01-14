@@ -53,6 +53,9 @@ repo_key
 # Buildkite: Ignore any agent keys (public or private) we have stored
 agent_key*
 
+# examples generated files
+examples/hello_world/generated/
+
 # AI generated files
 .ai
 .claude
