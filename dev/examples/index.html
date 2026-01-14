@@ -5,7 +5,9 @@ function echo_handler(ctx::ServerContext, request)
     return request  # Echo back the request
 end
 
-server = GRPCServer(&quot;0.0.0.0&quot;, 50051)
+host = &quot;127.0.0.1&quot;
+port = 50051
+server = GRPCServer(host, port)
 
 descriptor = ServiceDescriptor(
     &quot;example.Echo&quot;,
@@ -93,7 +95,9 @@ descriptor = ServiceDescriptor(
         )
     ),
     nothing
-)</code></pre><h2 id="Using-Interceptors"><a class="docs-heading-anchor" href="#Using-Interceptors">Using Interceptors</a><a id="Using-Interceptors-1"></a><a class="docs-heading-anchor-permalink" href="#Using-Interceptors" title="Permalink"></a></h2><h3 id="Logging-Interceptor"><a class="docs-heading-anchor" href="#Logging-Interceptor">Logging Interceptor</a><a id="Logging-Interceptor-1"></a><a class="docs-heading-anchor-permalink" href="#Logging-Interceptor" title="Permalink"></a></h3><pre><code class="language-julia hljs">server = GRPCServer(&quot;0.0.0.0&quot;, 50051)
+)</code></pre><h2 id="Using-Interceptors"><a class="docs-heading-anchor" href="#Using-Interceptors">Using Interceptors</a><a id="Using-Interceptors-1"></a><a class="docs-heading-anchor-permalink" href="#Using-Interceptors" title="Permalink"></a></h2><h3 id="Logging-Interceptor"><a class="docs-heading-anchor" href="#Logging-Interceptor">Logging Interceptor</a><a id="Logging-Interceptor-1"></a><a class="docs-heading-anchor-permalink" href="#Logging-Interceptor" title="Permalink"></a></h3><pre><code class="language-julia hljs">host = &quot;127.0.0.1&quot;
+port = 50051
+server = GRPCServer(host, port)
 
 # Add logging for all requests
 add_interceptor!(server, LoggingInterceptor(
@@ -165,7 +169,9 @@ function (rl::RateLimitInterceptor)(
     return next(ctx, request)
 end
 
-add_interceptor!(server, RateLimitInterceptor(100))</code></pre><h2 id="Health-Checking"><a class="docs-heading-anchor" href="#Health-Checking">Health Checking</a><a id="Health-Checking-1"></a><a class="docs-heading-anchor-permalink" href="#Health-Checking" title="Permalink"></a></h2><pre><code class="language-julia hljs">server = GRPCServer(&quot;0.0.0.0&quot;, 50051;
+add_interceptor!(server, RateLimitInterceptor(100))</code></pre><h2 id="Health-Checking"><a class="docs-heading-anchor" href="#Health-Checking">Health Checking</a><a id="Health-Checking-1"></a><a class="docs-heading-anchor-permalink" href="#Health-Checking" title="Permalink"></a></h2><pre><code class="language-julia hljs">host = &quot;127.0.0.1&quot;
+port = 50051
+server = GRPCServer(host, port;
     enable_health_check = true
 )
 
@@ -181,14 +187,14 @@ set_health!(server, &quot;my.Service&quot;, HealthStatus.NOT_SERVING)</code></pr
     private_key = &quot;server.key&quot;
 )
 
-server = GRPCServer(&quot;0.0.0.0&quot;, 50051; tls = tls_config)</code></pre><h3 id="Mutual-TLS-(mTLS)"><a class="docs-heading-anchor" href="#Mutual-TLS-(mTLS)">Mutual TLS (mTLS)</a><a id="Mutual-TLS-(mTLS)-1"></a><a class="docs-heading-anchor-permalink" href="#Mutual-TLS-(mTLS)" title="Permalink"></a></h3><pre><code class="language-julia hljs">tls_config = TLSConfig(
+server = GRPCServer(host, port; tls = tls_config)</code></pre><h3 id="Mutual-TLS-(mTLS)"><a class="docs-heading-anchor" href="#Mutual-TLS-(mTLS)">Mutual TLS (mTLS)</a><a id="Mutual-TLS-(mTLS)-1"></a><a class="docs-heading-anchor-permalink" href="#Mutual-TLS-(mTLS)" title="Permalink"></a></h3><pre><code class="language-julia hljs">tls_config = TLSConfig(
     cert_chain = &quot;server.crt&quot;,
     private_key = &quot;server.key&quot;,
     client_ca = &quot;ca.crt&quot;,
     require_client_cert = true
 )
 
-server = GRPCServer(&quot;0.0.0.0&quot;, 50051; tls = tls_config)</code></pre><h3 id="Hot-Reloading-Certificates"><a class="docs-heading-anchor" href="#Hot-Reloading-Certificates">Hot Reloading Certificates</a><a id="Hot-Reloading-Certificates-1"></a><a class="docs-heading-anchor-permalink" href="#Hot-Reloading-Certificates" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Reload certificates without restarting server
+server = GRPCServer(host, port; tls = tls_config)</code></pre><h3 id="Hot-Reloading-Certificates"><a class="docs-heading-anchor" href="#Hot-Reloading-Certificates">Hot Reloading Certificates</a><a id="Hot-Reloading-Certificates-1"></a><a class="docs-heading-anchor-permalink" href="#Hot-Reloading-Certificates" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Reload certificates without restarting server
 reload_tls!(server)</code></pre><h2 id="Error-Handling"><a class="docs-heading-anchor" href="#Error-Handling">Error Handling</a><a id="Error-Handling-1"></a><a class="docs-heading-anchor-permalink" href="#Error-Handling" title="Permalink"></a></h2><h3 id="Returning-Specific-Status-Codes"><a class="docs-heading-anchor" href="#Returning-Specific-Status-Codes">Returning Specific Status Codes</a><a id="Returning-Specific-Status-Codes-1"></a><a class="docs-heading-anchor-permalink" href="#Returning-Specific-Status-Codes" title="Permalink"></a></h3><pre><code class="language-julia hljs">function my_handler(ctx::ServerContext, request)
     if request.id &lt; 0
         throw(GRPCError(
@@ -242,7 +248,9 @@ end</code></pre><h3 id="Setting-Response-Headers-and-Trailers"><a class="docs-he
     set_trailer!(ctx, &quot;x-processing-time&quot;, &quot;50ms&quot;)
 
     return response
-end</code></pre><h2 id="Compression"><a class="docs-heading-anchor" href="#Compression">Compression</a><a id="Compression-1"></a><a class="docs-heading-anchor-permalink" href="#Compression" title="Permalink"></a></h2><h3 id="Server-side-Compression"><a class="docs-heading-anchor" href="#Server-side-Compression">Server-side Compression</a><a id="Server-side-Compression-1"></a><a class="docs-heading-anchor-permalink" href="#Server-side-Compression" title="Permalink"></a></h3><pre><code class="language-julia hljs">server = GRPCServer(&quot;0.0.0.0&quot;, 50051;
+end</code></pre><h2 id="Compression"><a class="docs-heading-anchor" href="#Compression">Compression</a><a id="Compression-1"></a><a class="docs-heading-anchor-permalink" href="#Compression" title="Permalink"></a></h2><h3 id="Server-side-Compression"><a class="docs-heading-anchor" href="#Server-side-Compression">Server-side Compression</a><a id="Server-side-Compression-1"></a><a class="docs-heading-anchor-permalink" href="#Server-side-Compression" title="Permalink"></a></h3><pre><code class="language-julia hljs">host = &quot;127.0.0.1&quot;
+port = 50051
+server = GRPCServer(host, port;
     enabled_compression = [CompressionCodec.GZIP, CompressionCodec.DEFLATE]
 )</code></pre><h3 id="Manual-Compression"><a class="docs-heading-anchor" href="#Manual-Compression">Manual Compression</a><a id="Manual-Compression-1"></a><a class="docs-heading-anchor-permalink" href="#Manual-Compression" title="Permalink"></a></h3><pre><code class="language-julia hljs">using gRPCServer: compress, decompress, CompressionCodec
 
@@ -252,7 +260,9 @@ data = Vector{UInt8}(&quot;Large data to compress...&quot;)
 compressed = compress(data, CompressionCodec.GZIP)
 
 # Decompress
-original = decompress(compressed, CompressionCodec.GZIP)</code></pre><h2 id="Graceful-Shutdown"><a class="docs-heading-anchor" href="#Graceful-Shutdown">Graceful Shutdown</a><a id="Graceful-Shutdown-1"></a><a class="docs-heading-anchor-permalink" href="#Graceful-Shutdown" title="Permalink"></a></h2><pre><code class="language-julia hljs">server = GRPCServer(&quot;0.0.0.0&quot;, 50051)
+original = decompress(compressed, CompressionCodec.GZIP)</code></pre><h2 id="Graceful-Shutdown"><a class="docs-heading-anchor" href="#Graceful-Shutdown">Graceful Shutdown</a><a id="Graceful-Shutdown-1"></a><a class="docs-heading-anchor-permalink" href="#Graceful-Shutdown" title="Permalink"></a></h2><pre><code class="language-julia hljs">host = &quot;127.0.0.1&quot;
+port = 50051
+server = GRPCServer(host, port)
 register!(server, MyService())
 
 # Run in background task
@@ -264,4 +274,4 @@ stop!(server; timeout = 30.0)
 
 # Wait for server to stop
 wait(server_task)
-@info &quot;Server stopped&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/">« API Reference</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Wednesday 14 January 2026 09:19">Wednesday 14 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+@info &quot;Server stopped&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/">« API Reference</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Wednesday 14 January 2026 09:29">Wednesday 14 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
