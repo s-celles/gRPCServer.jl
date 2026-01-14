@@ -6,12 +6,12 @@
 
 A native Julia implementation of a [gRPC](https://grpc.io/) server library.
 
-## Features
+## Features (to be expected quickly)
 
 - **All RPC Patterns**: Unary, server streaming, client streaming, and bidirectional streaming
 - **Type-Safe**: Leverages Julia's type system for compile-time safety
 - **High Performance**: Type-stable dispatch paths, minimal allocations
-- **Production Ready**: TLS/mTLS, health checking, reflection service
+- **Production Ready**: TLS/mTLS, health checking, reflection service  (still need to be implemented)
 - **Extensible**: Interceptor support for logging, authentication, metrics
 - **Julia Idiomatic**: Iterator interfaces for streams, keyword arguments, comprehensive docstrings
 
@@ -19,7 +19,9 @@ A native Julia implementation of a [gRPC](https://grpc.io/) server library.
 
 ```julia
 using Pkg
-Pkg.add("gRPCServer")
+Pkg.dev("https://github.com/s-celles/gRPCServer.jl")
+
+# Pkg.add("gRPCServer")  # when it will be registered
 ```
 
 ## Quick Start
