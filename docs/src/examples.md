@@ -11,7 +11,9 @@ function echo_handler(ctx::ServerContext, request)
     return request  # Echo back the request
 end
 
-server = GRPCServer("0.0.0.0", 50051)
+host = "127.0.0.1"
+port = 50051
+server = GRPCServer(host, port)
 
 descriptor = ServiceDescriptor(
     "example.Echo",
@@ -131,7 +133,9 @@ descriptor = ServiceDescriptor(
 ### Logging Interceptor
 
 ```julia
-server = GRPCServer("0.0.0.0", 50051)
+host = "127.0.0.1"
+port = 50051
+server = GRPCServer(host, port)
 
 # Add logging for all requests
 add_interceptor!(server, LoggingInterceptor(
@@ -227,7 +231,9 @@ add_interceptor!(server, RateLimitInterceptor(100))
 ## Health Checking
 
 ```julia
-server = GRPCServer("0.0.0.0", 50051;
+host = "127.0.0.1"
+port = 50051
+server = GRPCServer(host, port;
     enable_health_check = true
 )
 
@@ -251,7 +257,7 @@ tls_config = TLSConfig(
     private_key = "server.key"
 )
 
-server = GRPCServer("0.0.0.0", 50051; tls = tls_config)
+server = GRPCServer(host, port; tls = tls_config)
 ```
 
 ### Mutual TLS (mTLS)
@@ -264,7 +270,7 @@ tls_config = TLSConfig(
     require_client_cert = true
 )
 
-server = GRPCServer("0.0.0.0", 50051; tls = tls_config)
+server = GRPCServer(host, port; tls = tls_config)
 ```
 
 ### Hot Reloading Certificates
@@ -360,7 +366,9 @@ end
 ### Server-side Compression
 
 ```julia
-server = GRPCServer("0.0.0.0", 50051;
+host = "127.0.0.1"
+port = 50051
+server = GRPCServer(host, port;
     enabled_compression = [CompressionCodec.GZIP, CompressionCodec.DEFLATE]
 )
 ```
@@ -382,7 +390,9 @@ original = decompress(compressed, CompressionCodec.GZIP)
 ## Graceful Shutdown
 
 ```julia
-server = GRPCServer("0.0.0.0", 50051)
+host = "127.0.0.1"
+port = 50051
+server = GRPCServer(host, port)
 register!(server, MyService())
 
 # Run in background task

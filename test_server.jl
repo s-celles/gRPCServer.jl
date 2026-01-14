@@ -5,12 +5,14 @@ Pkg.activate(".")
 using gRPCServer
 
 # Create server with reflection enabled
-server = GRPCServer("0.0.0.0", 50051; enable_reflection=true, enable_health_check=true)
+host = "127.0.0.1"
+port = 50051
+server = GRPCServer(host, port; enable_reflection=true, enable_health_check=true)
 
 # Start server
 start!(server)
 
-println("Server started on port 50051")
+println("Server started on port $port")
 println("Server status: ", server.status)
 println("Services: ", services(server))
 

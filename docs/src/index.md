@@ -20,7 +20,10 @@ gRPCServer.jl provides a complete gRPC server implementation in Julia, enabling 
 
 ```julia
 using Pkg
-Pkg.add("gRPCServer")
+
+Pkg.dev("https://github.com/s-celles/gRPCServer.jl")
+
+# Pkg.add("gRPCServer")  # when registered
 ```
 
 ## Quick Example
@@ -34,7 +37,9 @@ function my_handler(ctx::ServerContext, request)
 end
 
 # Create server
-server = GRPCServer("0.0.0.0", 50051)
+host = "127.0.0.1"
+port = 50051
+server = GRPCServer(host, port)
 
 # Register service
 descriptor = ServiceDescriptor(

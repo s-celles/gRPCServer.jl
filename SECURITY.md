@@ -72,17 +72,17 @@ When deploying gRPCServer.jl in production:
        private_key = "/path/to/key.pem",
        min_version = :TLSv1_2
    )
-   server = GRPCServer("0.0.0.0", 50051; tls = tls_config)
+   server = GRPCServer(host, port; tls = tls_config)
    ```
 
 2. **Disable debug mode**: Never enable `debug_mode` in production
    ```julia
-   server = GRPCServer("0.0.0.0", 50051; debug_mode = false)
+   server = GRPCServer(host, port; debug_mode = false)
    ```
 
 3. **Set appropriate limits**: Configure message and stream limits
    ```julia
-   server = GRPCServer("0.0.0.0", 50051;
+   server = GRPCServer(host, port;
        max_message_size = 4 * 1024 * 1024,  # 4MB
        max_concurrent_streams = 100
    )

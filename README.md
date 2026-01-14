@@ -80,7 +80,9 @@ function gRPCServer.service_descriptor(::GreeterService)
 end
 
 # Run server
-server = GRPCServer("0.0.0.0", 50051)
+host = "127.0.0.1"
+port = 50051
+server = GRPCServer(host, port)
 register!(server, GreeterService())
 run(server)
 ```
@@ -94,7 +96,7 @@ grpcurl -plaintext -d '{"name": "Julia"}' localhost:50051 helloworld.Greeter/Say
 ## Configuration
 
 ```julia
-server = GRPCServer("0.0.0.0", 50051;
+server = GRPCServer(host, port;
     max_message_size = 8 * 1024 * 1024,  # 8MB
     max_concurrent_streams = 100,
     enable_health_check = true,
@@ -114,7 +116,7 @@ tls_config = TLSConfig(
     min_version = :TLSv1_2
 )
 
-server = GRPCServer("0.0.0.0", 50051; tls = tls_config)
+server = GRPCServer(host, port; tls = tls_config)
 ```
 
 ## Interceptors
