@@ -19,11 +19,10 @@ makedocs(
     ],
     doctest = false,  # Disable doctests for now
     checkdocs = :exports,
-    warnonly = [:missing_docs, :cross_references],
     remotes = nothing,  # Disable repo lookup when no git history
 )
 
 deploydocs(
     repo = "github.com/s-celles/gRPCServer.jl.git",
-    devbranch = "main",
+    devbranch = "develop",
 )
