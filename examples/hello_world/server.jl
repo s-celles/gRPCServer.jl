@@ -7,7 +7,7 @@ using .helloworld
 # Handlers
 function say_hello(ctx::ServerContext, request::HelloRequest)::HelloReply
     @info "Received request" name=request.name request_id=ctx.request_id
-    HelloReply(message = "Hello, $(request.name)!")
+    HelloReply("Hello, $(request.name)!")
 end
 
 function say_hello_stream(
@@ -20,7 +20,7 @@ function say_hello_stream(
             @warn "Stream cancelled by client"
             return nothing
         end
-        send!(stream, HelloReply(message = "Hello $(i), $(request.name)!"))
+        send!(stream, HelloReply("Hello $(i), $(request.name)!"))
         sleep(0.5)
     end
     return nothing

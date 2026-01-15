@@ -11,8 +11,6 @@ export HelloReply, HelloRequest
 struct HelloReply
     message::String
 end
-# Keyword constructor for idiomatic Julia usage
-HelloReply(; message::String = "") = HelloReply(message)
 PB.default_values(::Type{HelloReply}) = (;message = "")
 PB.field_numbers(::Type{HelloReply}) = (;message = 1)
 
@@ -43,8 +41,6 @@ end
 struct HelloRequest
     name::String
 end
-# Keyword constructor for idiomatic Julia usage
-HelloRequest(; name::String = "") = HelloRequest(name)
 PB.default_values(::Type{HelloRequest}) = (;name = "")
 PB.field_numbers(::Type{HelloRequest}) = (;name = 1)
 

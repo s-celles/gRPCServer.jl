@@ -42,6 +42,31 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v2
+
+      # Install grpcurl for example validation
+      - name: Install grpcurl (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          GRPCURL_VERSION="1.8.9"
+          curl -sSL "https://github.com/fullstorydev/grpcurl/releases/download/v${GRPCURL_VERSION}/grpcurl_${GRPCURL_VERSION}_linux_x86_64.tar.gz" | tar -xz -C /usr/local/bin grpcurl
+          grpcurl --version
+
+      - name: Install grpcurl (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install grpcurl
+          grpcurl --version
+
+      - name: Install grpcurl (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $GRPCURL_VERSION = "1.8.9"
+          Invoke-WebRequest -Uri "https://github.com/fullstorydev/grpcurl/releases/download/v${GRPCURL_VERSION}/grpcurl_${GRPCURL_VERSION}_windows_x86_64.zip" -OutFile grpcurl.zip
+          Expand-Archive -Path grpcurl.zip -DestinationPath $env:USERPROFILE\bin
+          echo "$env:USERPROFILE\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & "$env:USERPROFILE\bin\grpcurl.exe" --version
+
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1

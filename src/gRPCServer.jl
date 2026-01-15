@@ -158,20 +158,8 @@ export has_health_descriptor, has_reflection_descriptor
     _ = codec_name(CompressionCodec.GZIP)
     _ = parse_codec("gzip")
 
-    # Exercise service descriptor creation
-    descriptor = ServiceDescriptor(
-        "test.Service",
-        Dict(
-            "Method" => MethodDescriptor(
-                "Method",
-                MethodType.UNARY,
-                "test.Request",
-                "test.Response",
-                (ctx, req) -> req
-            )
-        ),
-        nothing
-    )
+    # Note: ServiceDescriptor with MethodDescriptor is tested in the test suite
+    # We skip it in precompile workload to avoid type registry warnings during precompilation
 
     # Exercise interceptor creation
     _ = LoggingInterceptor()
