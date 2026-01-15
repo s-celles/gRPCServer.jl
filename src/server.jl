@@ -57,6 +57,10 @@ mutable struct GRPCServer
     shutdown_event::Condition
     last_error::Union{Exception, Nothing}
 
+    # TLS state
+    """Cached SSL context for TLS mode. Created at server startup when TLS is configured."""
+    ssl_context::Any  # Union{OpenSSL.SSLContext, Nothing} - using Any to avoid type dep
+
     function GRPCServer(
         host::String,
         port::Int;
@@ -118,7 +122,8 @@ mutable struct GRPCServer
             [],
             ReentrantLock(),
             Condition(),
-            nothing
+            nothing,
+            nothing  # ssl_context - initialized in start!() when TLS configured
         )
 
         # Add logging interceptor if requested
@@ -237,6 +242,18 @@ function start!(server::GRPCServer)
     server.last_error = nothing
 
     try
+        # Initialize TLS if configured
+        if server.config.tls !== nothing
+            @info "Initializing TLS..." cert=server.config.tls.cert_chain
+            # Verify TLS configuration first
+            if !verify_tls_config(server.config.tls)
+                throw(TLSError("Invalid TLS configuration - certificate or key files not found"))
+            end
+            # Create and cache SSL context
+            server.ssl_context = create_ssl_context(server.config.tls)
+            @info "TLS initialized successfully"
+        end
+
         # Auto-register built-in services if enabled
         register_builtin_services!(server)
 
@@ -487,7 +504,32 @@ function accept_loop(server::GRPCServer)
     while server.status == ServerStatus.RUNNING && server.socket !== nothing
         try
             client = accept(server.socket)
-            @async handle_connection(server, client)
+
+            # Wrap with TLS if configured
+            if server.ssl_context !== nothing
+                try
+                    # Wrap socket with TLS
+                    ssl_socket = wrap_socket_tls(client, server.ssl_context)
+
+                    # Verify ALPN negotiated HTTP/2
+                    if !verify_http2_negotiated(ssl_socket)
+                        @warn "ALPN negotiation failed - h2 protocol not negotiated"
+                        close_tls_socket(ssl_socket)
+                        continue
+                    end
+
+                    @async handle_connection(server, ssl_socket)
+                catch tls_err
+                    @warn "TLS handshake failed" exception=tls_err
+                    try
+                        close(client)
+                    catch
+                    end
+                    continue  # Continue accepting new connections
+                end
+            else
+                @async handle_connection(server, client)
+            end
         catch e
             if server.status != ServerStatus.RUNNING
                 break  # Expected during shutdown
@@ -1092,7 +1134,8 @@ function Base.show(io::IO, server::GRPCServer)
     print(io, "GRPCServer($(server.host):$(server.port), status=$(server.status)")
     print(io, ", services=$(length(services(server)))")
     if server.config.tls !== nothing
-        print(io, ", TLS")
+        tls_status = server.ssl_context !== nothing ? "active" : "configured"
+        print(io, ", TLS=$tls_status")
     end
     print(io, ")")
 end

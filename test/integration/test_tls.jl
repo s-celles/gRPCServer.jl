@@ -3,6 +3,7 @@
 
 using Test
 using gRPCServer
+using Sockets
 
 # TestUtils is included once in runtests.jl to avoid method redefinition warnings
 # using TestUtils is inherited from the parent module
@@ -108,12 +109,12 @@ using gRPCServer
 
     @testset "PeerInfo with Certificate" begin
         # Without certificate
-        peer = PeerInfo(IPv4("192.168.1.1"), 12345)
+        peer = PeerInfo(Sockets.IPv4("192.168.1.1"), 12345)
         @test peer.certificate === nothing
 
         # With certificate
         cert_data = UInt8[0x30, 0x82, 0x01, 0x00]  # Fake DER data
-        peer_with_cert = PeerInfo(IPv4("192.168.1.1"), 12345; certificate=cert_data)
+        peer_with_cert = PeerInfo(Sockets.IPv4("192.168.1.1"), 12345; certificate=cert_data)
         @test peer_with_cert.certificate == cert_data
 
         # Show method
@@ -193,5 +194,103 @@ using gRPCServer
         )
 
         @test_throws gRPCServer.TLSError gRPCServer.create_ssl_context(config)
+    end
+
+    # User Story 1: Basic TLS Server Setup Tests
+    @testset "US1: TLS Server Accept Loop Integration" begin
+        # Get the test certificate paths
+        cert_dir = joinpath(@__DIR__, "..", "fixtures", "certs")
+        server_cert = joinpath(cert_dir, "server.crt")
+        server_key = joinpath(cert_dir, "server.key")
+        ca_cert = joinpath(cert_dir, "ca.crt")
+
+        # Skip if test certificates don't exist
+        if !isfile(server_cert) || !isfile(server_key)
+            @warn "Skipping TLS integration tests - test certificates not found" cert_dir
+            return
+        end
+
+        @testset "TLS Server Starts Successfully" begin
+            tls_config = TLSConfig(
+                cert_chain = server_cert,
+                private_key = server_key
+            )
+
+            port = rand(51100:51199)
+            server = GRPCServer("127.0.0.1", port; tls=tls_config)
+
+            try
+                start!(server)
+                @test server.status == ServerStatus.RUNNING
+                @test server.ssl_context !== nothing
+                sleep(0.1)  # Give server time to be fully ready
+            finally
+                stop!(server; force=true)
+            end
+        end
+
+        @testset "TLS Server ssl_context Field Set" begin
+            tls_config = TLSConfig(
+                cert_chain = server_cert,
+                private_key = server_key
+            )
+
+            port = rand(51200:51299)
+            server = GRPCServer("127.0.0.1", port; tls=tls_config)
+
+            # Before start, ssl_context should be nothing
+            @test server.ssl_context === nothing
+
+            try
+                start!(server)
+                # After start, ssl_context should be set
+                @test server.ssl_context !== nothing
+            finally
+                stop!(server; force=true)
+            end
+        end
+
+        @testset "TLS Server Show Method" begin
+            tls_config = TLSConfig(
+                cert_chain = server_cert,
+                private_key = server_key
+            )
+
+            port = rand(51300:51399)
+            server = GRPCServer("127.0.0.1", port; tls=tls_config)
+
+            # Before start - TLS configured but not active
+            str_before = sprint(show, server)
+            @test occursin("TLS=configured", str_before)
+
+            try
+                start!(server)
+                # After start - TLS active
+                str_after = sprint(show, server)
+                @test occursin("TLS=active", str_after)
+            finally
+                stop!(server; force=true)
+            end
+        end
+
+        @testset "Plaintext Server Still Works (Backwards Compatibility)" begin
+            # Server without TLS should work as before
+            port = rand(51400:51499)
+            server = GRPCServer("127.0.0.1", port)
+
+            try
+                start!(server)
+                @test server.status == ServerStatus.RUNNING
+                @test server.ssl_context === nothing
+                @test server.config.tls === nothing
+
+                # Plaintext connection should work
+                client = MockGRPCClient("127.0.0.1", port)
+                @test connect!(client)
+                disconnect!(client)
+            finally
+                stop!(server; force=true)
+            end
+        end
     end
 end
