@@ -1,16 +1,58 @@
-# Ignore everything
+################################################################################
+#                                                                              #
+#                              .gitignore                                      #
+#                                                                              #
+#  This file ignores EVERYTHING by default and explicitly includes only the    #
+#  files and directories required for the project.                             #
+#  To add an exception, use the "!" prefix before the path.                    #
+#                                                                              #
+################################################################################
+
+# ======================
+# === Global Ignore  ===
+# ======================
 *
 
-# Exception for README
+# ======================
+# ===   Exceptions   ===
+# ======================
 !README.md
+!LICENSE.md
+!CODE_OF_CONDUCT.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!CONTRIBUTORS.md
+!ROADMAP.md
+!SECURITY.md
 
-# Exception for Julia source
+# Core project files
+!Project.toml
+!.github/
+!.github/**
+!.codecov.yml
+
+# Source code
 !src/
 !src/**
 
-# Exception for Julia docs
+# Documentation
 !docs/
 !docs/**
+
+# Tests
+!test/
+!test/**/*.jl
+!test/fixtures/
+!test/fixtures/*.jl
+
+# Examples
+!examples/
+!examples/**
+
+# Benchmarks (exclude JSON results)
+!benchmark/
+!benchmark/**
+benchmark/*.json
 
 # Exception for tests
 !test/
@@ -24,6 +66,11 @@
 !examples/
 !examples/**
 
+# Exception for benchmarks (exclude JSON results)
+!benchmark/
+!benchmark/**
+benchmark/*.json
+
 # Exception for Project.toml
 !Project.toml
 
@@ -31,19 +78,10 @@
 !.github/
 !.github/**
 
-# Exception for the following files
-!LICENSE.md
-!CODE_OF_CONDUCT.md
-!CHANGELOG.md
-!CONTRIBUTING.md
-!CONTRIBUTORS.md
-!ROADMAP.md
-!SECURITY.md
-!.codecov.yml
-
-##############################################
-
-# Julia .gitignore defaults
+# ==============================
+# === Julia-Specific Ignores ===
+# ==============================
+# Build artifacts
 /*.tar.gz
 /tmp
 /dist
@@ -58,10 +96,13 @@
 /deps/jlutilities/depot
 /source-dist.tmp
 /source-dist.tmp1
+
+# Test results
 /test/results_*.json
 /test/results_*.dat
 /test/deps
 
+# Compiled files
 *.expmap
 *.exe
 *.dll
@@ -80,25 +121,38 @@
 *.jl.*.mem
 *.ji
 
+# Performance files
 /perf*
+
+# ===============================
+# === IDE/OS-Specific Ignores ===
+# ===============================
+# macOS
 .DS_Store
+
+# IDEs
 .idea/*
 .vscode/*
 .zed/*
 *.heapsnapshot
 .cache
-# Buildkite: Ignore the entire .buildkite directory
+
+# ==================================
+# === Buildkite-Specific Ignores ===
+# ==================================
+# Buildkite directory
 /.buildkite
 
-# Builtkite: json test data
+# Buildkite test data
 /test/results.json
 
-# Buildkite: Ignore the unencrypted repo_key
+# Buildkite keys
 repo_key
-
-# Buildkite: Ignore any agent keys (public or private) we have stored
 agent_key*
 
-# documentation generated files
+# ===========================
+# === Documentation Build ===
+# ===========================
+# Generated documentation
 docs/build/
 docs/Manifest.toml

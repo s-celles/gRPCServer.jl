@@ -56,16 +56,26 @@ The constitution recommends >80% code coverage for non-generated code.
 
 ### Performance Benchmarks
 
-**Status**: Not Started
+**Status**: ✅ Complete
 
 The constitution requires benchmark comparisons for performance-critical changes.
 
-**Tasks**:
-- [ ] Create benchmark suite using BenchmarkTools.jl
-- [ ] Benchmark request dispatch latency
-- [ ] Benchmark streaming throughput
-- [ ] Benchmark message serialization overhead
-- [ ] Document baseline performance metrics
+**Completed**:
+- [x] Create benchmark suite using BenchmarkTools.jl
+- [x] Benchmark request dispatch latency
+- [x] Benchmark streaming throughput
+- [x] Benchmark message serialization overhead
+- [x] Comparison functionality with color-coded output
+- [x] Document baseline performance metrics
+
+**Usage**:
+```bash
+cd benchmark
+julia --project -e 'using Pkg; Pkg.instantiate()'
+julia --project benchmarks.jl
+julia --project benchmarks.jl --save baseline.json
+julia --project benchmarks.jl --compare baseline.json
+```
 
 ## Low Priority
 
@@ -146,6 +156,7 @@ A security audit would help identify vulnerabilities in the HTTP/2 and TLS imple
 - [x] CODE_OF_CONDUCT.md
 - [x] CONTRIBUTING.md
 - [x] CONTRIBUTORS.md
+- [x] Performance benchmarks (BenchmarkTools.jl)
 
 ---
 

@@ -121,6 +121,57 @@ For repository maintainers: To prevent rate limiting during high CI activity, yo
 2. Add `CODECOV_TOKEN` as a repository secret in GitHub
 3. Update the CI workflow to pass the token (optional, works without it for public repos)
 
+## Running Benchmarks
+
+The project includes a benchmark suite to measure performance of critical operations.
+
+### Running All Benchmarks
+
+```bash
+cd benchmark
+julia --project -e 'using Pkg; Pkg.instantiate()'
+julia --project benchmarks.jl
+```
+
+### Running Specific Categories
+
+```bash
+# Dispatch benchmarks only
+julia --project benchmarks.jl dispatch
+
+# Streaming benchmarks only
+julia --project benchmarks.jl streaming
+
+# Serialization benchmarks only
+julia --project benchmarks.jl serialization
+```
+
+### Comparing Performance
+
+Save a baseline before making changes:
+
+```bash
+julia --project benchmarks.jl --save baseline.json
+```
+
+After making changes, compare against the baseline:
+
+```bash
+julia --project benchmarks.jl --compare baseline.json
+```
+
+The comparison shows percentage changes with color coding:
+- Green: Improvement (faster)
+- Yellow: Slower (>5%)
+- Red: Regression (>20% slower)
+
+### Understanding Results
+
+Each benchmark shows:
+- **Median time**: Most representative timing
+- **Memory**: Bytes allocated
+- **Allocs**: Number of allocations
+
 ## Running Tests
 
 ### All Tests
