@@ -89,16 +89,23 @@ end
     @testset "Server Accepts TCP Connections for grpcurl" begin
         # Even without full HTTP/2, server should accept TCP connections
         with_test_server(enable_reflection=true) do ts
-            sleep(0.3)
+            sleep(1.0)  # Give server more time to start on CI
 
-            # Verify server is listening
-            try
-                sock = connect("localhost", ts.port)
-                @test isopen(sock)
-                close(sock)
-            catch e
-                @test false  # Should be able to connect
+            # Verify server is listening with retry
+            connected = false
+            for attempt in 1:3
+                try
+                    sock = connect("localhost", ts.port)
+                    connected = isopen(sock)
+                    close(sock)
+                    break
+                catch e
+                    if attempt < 3
+                        sleep(0.5)  # Wait and retry
+                    end
+                end
             end
+            @test connected
         end
     end
 
