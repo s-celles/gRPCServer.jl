@@ -35,12 +35,12 @@ function gRPCServer.service_descriptor(::GreeterService)
         Dict(
             "SayHello" => MethodDescriptor(
                 "SayHello", MethodType.UNARY,
-                "helloworld.HelloRequest", "helloworld.HelloReply",
+                HelloRequest, HelloReply,  # Use Julia types for auto-registration
                 say_hello
             ),
             "SayHelloStream" => MethodDescriptor(
                 "SayHelloStream", MethodType.SERVER_STREAMING,
-                "helloworld.HelloRequest", "helloworld.HelloReply",
+                HelloRequest, HelloReply,  # Use Julia types for auto-registration
                 say_hello_stream
             )
         ),

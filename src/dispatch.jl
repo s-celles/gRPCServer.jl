@@ -37,7 +37,10 @@ struct MethodDescriptor
     input_type::String
     output_type::String
     handler::Function
+    input_julia_type::Union{Type, Nothing}
+    output_julia_type::Union{Type, Nothing}
 
+    # Constructor with string type names (backward compatible)
     function MethodDescriptor(
         name::String,
         method_type::MethodType.T,
@@ -45,7 +48,46 @@ struct MethodDescriptor
         output_type::String,
         handler::Function
     )
-        new(name, method_type, input_type, output_type, handler)
+        new(name, method_type, input_type, output_type, handler, nothing, nothing)
+    end
+
+    # Constructor with Julia types (preferred - enables auto-registration)
+    function MethodDescriptor(
+        name::String,
+        method_type::MethodType.T,
+        input_type::Type,
+        output_type::Type,
+        handler::Function
+    )
+        # Derive protobuf type name from Julia type
+        input_name = _type_to_proto_name(input_type)
+        output_name = _type_to_proto_name(output_type)
+        new(name, method_type, input_name, output_name, handler, input_type, output_type)
+    end
+end
+
+"""
+    _type_to_proto_name(T::Type) -> String
+
+Convert a Julia type to its protobuf fully-qualified name.
+Uses the module hierarchy to construct the name.
+"""
+function _type_to_proto_name(T::Type)::String
+    # Get the module path
+    mod = parentmodule(T)
+    type_name = string(nameof(T))
+
+    # Build package name from module hierarchy
+    parts = String[]
+    while mod !== Main && mod !== Base && mod !== Core
+        pushfirst!(parts, string(nameof(mod)))
+        mod = parentmodule(mod)
+    end
+
+    if isempty(parts)
+        return type_name
+    else
+        return join(parts, ".") * "." * type_name
     end
 end
 
@@ -155,6 +197,7 @@ end
     register!(registry::ServiceRegistry, descriptor::ServiceDescriptor)
 
 Register a service in the registry.
+Also auto-registers protobuf types if Julia types were provided in MethodDescriptor.
 """
 function register!(registry::ServiceRegistry, descriptor::ServiceDescriptor)
     if haskey(registry.services, descriptor.name)
@@ -163,10 +206,19 @@ function register!(registry::ServiceRegistry, descriptor::ServiceDescriptor)
 
     registry.services[descriptor.name] = descriptor
 
-    # Build method lookup
+    # Build method lookup and auto-register types
+    type_registry = get_type_registry()
     for (method_name, method) in descriptor.methods
         path = "/$(descriptor.name)/$(method_name)"
         registry.method_lookup[path] = (descriptor, method)
+
+        # Auto-register Julia types if provided
+        if method.input_julia_type !== nothing
+            type_registry[method.input_type] = method.input_julia_type
+        end
+        if method.output_julia_type !== nothing
+            type_registry[method.output_type] = method.output_julia_type
+        end
     end
 end
 
