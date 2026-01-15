@@ -50,14 +50,14 @@ end
 
 # Run server
 function main()
-    server = GRPCServer("0.0.0.0", 50051;
+    server = GRPCServer("127.0.0.1", 50051;
         enable_health_check = true,
         enable_reflection = true
     )
 
     register!(server, GreeterService())
 
-    @info "gRPC server starting" host="0.0.0.0" port=50051
+    @info "gRPC server starting" host="127.0.0.1" port=50051
     run(server)
 end
 

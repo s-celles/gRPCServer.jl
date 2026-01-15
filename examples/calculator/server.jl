@@ -62,14 +62,14 @@ end
 
 # Run server
 function main()
-    server = GRPCServer("0.0.0.0", 50052;
+    server = GRPCServer("127.0.0.1", 50052;
         enable_health_check = true,
         enable_reflection = true
     )
 
     register!(server, CalculatorService())
 
-    @info "Calculator gRPC server starting" host="0.0.0.0" port=50052
+    @info "Calculator gRPC server starting" host="127.0.0.1" port=50052
     run(server)
 end
 

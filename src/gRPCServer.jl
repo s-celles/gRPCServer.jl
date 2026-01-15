@@ -13,7 +13,7 @@ bidirectional), interceptors, health checking, reflection, TLS/mTLS, and compres
 using gRPCServer
 
 # Create server
-server = GRPCServer("0.0.0.0", 50051)
+server = GRPCServer("127.0.0.1", 50051)
 
 # Register your service
 register!(server, MyService())
