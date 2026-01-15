@@ -4,6 +4,17 @@ This document outlines planned improvements and missing features for gRPCServer.
 
 ## High Priority
 
+### Server Streaming RPC Support with grpcurl
+
+**Status**: Not Started
+
+Server streaming RPC methods return "Method type SERVER_STREAMING not yet supported" when called via grpcurl.
+
+**Tasks**:
+- [ ] Implement server streaming support in HTTP/2 response handling
+- [ ] Test with hello_world SayHelloStream example
+- [ ] Update examples/hello_world/README.md with streaming grpcurl commands
+
 ### gRPCClient.jl Integration Tests
 
 **Status**: Not Started

@@ -1,6 +1,6 @@
 # Hello World Example
 
-A simple gRPC server demonstrating unary and server-streaming RPC patterns.
+A simple gRPC server demonstrating unary RPC pattern.
 
 ## Files
 
@@ -19,6 +19,8 @@ The server listens on port 50051 with reflection and health checking enabled.
 
 ## Testing with grpcurl
 
+All commands below should be run from the `examples/hello_world` directory.
+
 ### List Available Services
 
 ```bash
@@ -32,47 +34,16 @@ grpc.reflection.v1alpha.ServerReflection
 helloworld.Greeter
 ```
 
-### Describe the Greeter Service
-
-```bash
-grpcurl -plaintext localhost:50051 describe helloworld.Greeter
-```
-
 ### Call SayHello (Unary RPC)
 
 ```bash
-grpcurl -plaintext -d '{"name": "World"}' localhost:50051 helloworld.Greeter/SayHello
+grpcurl -plaintext -proto greeter.proto -d '{"name": "World"}' localhost:50051 helloworld.Greeter/SayHello
 ```
 
 Expected output:
 ```json
 {
   "message": "Hello, World!"
-}
-```
-
-### Call SayHelloStream (Server Streaming RPC)
-
-```bash
-grpcurl -plaintext -d '{"name": "Julia"}' localhost:50051 helloworld.Greeter/SayHelloStream
-```
-
-Expected output (5 messages streamed):
-```json
-{
-  "message": "Hello 1, Julia!"
-}
-{
-  "message": "Hello 2, Julia!"
-}
-{
-  "message": "Hello 3, Julia!"
-}
-{
-  "message": "Hello 4, Julia!"
-}
-{
-  "message": "Hello 5, Julia!"
 }
 ```
 

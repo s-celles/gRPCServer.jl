@@ -19,6 +19,8 @@ The server listens on port 50052 with reflection and health checking enabled.
 
 ## Testing with grpcurl
 
+All commands below should be run from the `examples/calculator` directory.
+
 ### List Available Services
 
 ```bash
@@ -32,16 +34,10 @@ grpc.health.v1.Health
 grpc.reflection.v1alpha.ServerReflection
 ```
 
-### Describe the Calculator Service
-
-```bash
-grpcurl -plaintext localhost:50052 describe calculator.Calculator
-```
-
 ### Add Operation
 
 ```bash
-grpcurl -plaintext -d '{"first_number": 5, "second_number": 3}' localhost:50052 calculator.Calculator/Add
+grpcurl -plaintext -proto calculator.proto -d '{"first_number": 5, "second_number": 3}' localhost:50052 calculator.Calculator/Add
 ```
 
 Expected output:
@@ -54,7 +50,7 @@ Expected output:
 ### Subtract Operation
 
 ```bash
-grpcurl -plaintext -d '{"first_number": 10, "second_number": 4}' localhost:50052 calculator.Calculator/Subtract
+grpcurl -plaintext -proto calculator.proto -d '{"first_number": 10, "second_number": 4}' localhost:50052 calculator.Calculator/Subtract
 ```
 
 Expected output:
@@ -67,7 +63,7 @@ Expected output:
 ### Multiply Operation
 
 ```bash
-grpcurl -plaintext -d '{"first_number": 7, "second_number": 6}' localhost:50052 calculator.Calculator/Multiply
+grpcurl -plaintext -proto calculator.proto -d '{"first_number": 7, "second_number": 6}' localhost:50052 calculator.Calculator/Multiply
 ```
 
 Expected output:
@@ -80,7 +76,7 @@ Expected output:
 ### Divide Operation
 
 ```bash
-grpcurl -plaintext -d '{"first_number": 20, "second_number": 4}' localhost:50052 calculator.Calculator/Divide
+grpcurl -plaintext -proto calculator.proto -d '{"first_number": 20, "second_number": 4}' localhost:50052 calculator.Calculator/Divide
 ```
 
 Expected output:
@@ -93,7 +89,7 @@ Expected output:
 ### Floating-Point Division
 
 ```bash
-grpcurl -plaintext -d '{"first_number": 7.5, "second_number": 2.5}' localhost:50052 calculator.Calculator/Divide
+grpcurl -plaintext -proto calculator.proto -d '{"first_number": 7.5, "second_number": 2.5}' localhost:50052 calculator.Calculator/Divide
 ```
 
 Expected output:
@@ -106,7 +102,7 @@ Expected output:
 ### Division by Zero (Error Handling)
 
 ```bash
-grpcurl -plaintext -d '{"first_number": 10, "second_number": 0}' localhost:50052 calculator.Calculator/Divide
+grpcurl -plaintext -proto calculator.proto -d '{"first_number": 10, "second_number": 0}' localhost:50052 calculator.Calculator/Divide
 ```
 
 Expected output:
