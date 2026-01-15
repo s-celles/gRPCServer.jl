@@ -413,12 +413,11 @@ function Base.run(server::GRPCServer; block::Bool=true)
     start!(server)
 
     if block
-        # Set up signal handler for graceful shutdown
+        # Wait for shutdown without holding the lock
+        # The shutdown_event is a simple Condition that doesn't require a lock
         try
-            lock(server.lock) do
-                while server.status == ServerStatus.RUNNING
-                    wait(server.shutdown_event)
-                end
+            while server.status == ServerStatus.RUNNING
+                wait(server.shutdown_event)
             end
         catch e
             if e isa InterruptException
