@@ -890,20 +890,111 @@ function process_stream_request!(server::GRPCServer, conn::HTTP2Connection,
     service, method_desc = result
 
     # Dispatch based on method type
-    status, message, response_data = if method_desc.method_type == MethodType.UNARY
-        dispatch_unary(server.dispatcher, ctx, grpc_data)
+    if method_desc.method_type == MethodType.UNARY
+        status, message, response_data = dispatch_unary(server.dispatcher, ctx, grpc_data)
+        @debug "gRPC response" status=status response_len=length(response_data)
+        send_grpc_response(conn, io, stream.id, status, message, response_data)
+
+    elseif method_desc.method_type == MethodType.SERVER_STREAMING
+        # Handle server streaming - multiple responses to one request
+        handle_server_streaming(server, conn, io, stream, ctx, grpc_data, method_desc, service)
+
     elseif method_desc.method_type == MethodType.BIDI_STREAMING ||
            method_desc.method_type == MethodType.CLIENT_STREAMING
         # For streaming methods, handle one message at a time
-        dispatch_streaming_message(server.dispatcher, ctx, grpc_data, method_desc, service)
+        status, message, response_data = dispatch_streaming_message(server.dispatcher, ctx, grpc_data, method_desc, service)
+        @debug "gRPC response" status=status response_len=length(response_data)
+        send_grpc_response(conn, io, stream.id, status, message, response_data)
+
     else
-        (StatusCode.UNIMPLEMENTED, "Method type $(method_desc.method_type) not yet supported", UInt8[])
+        send_error_response(conn, io, stream.id, StatusCode.UNIMPLEMENTED, "Method type $(method_desc.method_type) not supported")
+    end
+end
+
+"""
+    handle_server_streaming(server, conn, io, stream, ctx, request_data, method_desc, service)
+
+Handle a server streaming RPC where the client sends one request and
+the server sends multiple responses.
+"""
+function handle_server_streaming(
+    server::GRPCServer,
+    conn::HTTP2Connection,
+    io::IO,
+    stream::HTTP2Stream,
+    ctx::ServerContext,
+    request_data::Vector{UInt8},
+    method_desc::MethodDescriptor,
+    service::ServiceDescriptor
+)
+    # Send response headers first (before any data)
+    response_headers = [
+        (":status", "200"),
+        ("content-type", "application/grpc"),
+        ("grpc-encoding", "identity"),
+    ]
+    header_frames = send_headers(conn, stream.id, response_headers; end_stream=false)
+    write_frames(io, header_frames)
+
+    # Track status for trailers
+    final_status = StatusCode.OK
+    final_message = ""
+
+    try
+        # Deserialize the single request
+        request = deserialize_message(request_data, method_desc.input_type)
+
+        # Get the output type for serialization
+        output_type = method_desc.output_julia_type
+
+        # Create send callback for the ServerStream
+        send_callback = function(message, compress)
+            response_data = serialize_message(message)
+            grpc_message = encode_grpc_message(response_data; compressed=false)
+            data_frames = send_data(conn, stream.id, grpc_message; end_stream=false)
+            write_frames(io, data_frames)
+        end
+
+        # Create close callback (no-op for server streaming, trailers sent after)
+        close_callback = function()
+            # Nothing to do - trailers sent after handler returns
+        end
+
+        # Create the ServerStream
+        stream_obj = if output_type !== nothing
+            ServerStream{output_type}(send_callback, close_callback)
+        else
+            # Fallback for string type names - use Any
+            ServerStream{Any}(send_callback, close_callback)
+        end
+
+        # Build interceptor chain and call handler
+        info = MethodInfo(service.name, method_desc.name, method_desc.method_type)
+        handler = build_handler_chain(server.dispatcher, service.name, method_desc.handler, info)
+
+        # Call handler with request and stream
+        handler(ctx, request, stream_obj)
+
+    catch e
+        if e isa GRPCError
+            final_status = e.code
+            final_message = e.message
+        else
+            @error "Error in server streaming handler" exception=(e, catch_backtrace())
+            final_status = StatusCode.INTERNAL
+            final_message = server.dispatcher.debug_mode ? sprint(showerror, e) : "Internal server error"
+        end
     end
 
-    @debug "gRPC response" status=status response_len=length(response_data)
-
-    # Send response
-    send_grpc_response(conn, io, stream.id, status, message, response_data)
+    # Send trailers with final status
+    trailers = [
+        ("grpc-status", string(Int(final_status))),
+    ]
+    if !isempty(final_message)
+        push!(trailers, ("grpc-message", final_message))
+    end
+    trailer_frames = send_trailers(conn, stream.id, trailers)
+    write_frames(io, trailer_frames)
 end
 
 """

@@ -1,6 +1,6 @@
 # Hello World Example
 
-A simple gRPC server demonstrating unary RPC pattern.
+A simple gRPC server demonstrating unary and server streaming RPC patterns.
 
 ## Files
 
@@ -44,6 +44,31 @@ Expected output:
 ```json
 {
   "message": "Hello, World!"
+}
+```
+
+### Call SayHelloStream (Server Streaming RPC)
+
+```bash
+grpcurl -plaintext -proto greeter.proto -d '{"name": "Julia"}' localhost:50051 helloworld.Greeter/SayHelloStream
+```
+
+Expected output (5 messages streamed):
+```json
+{
+  "message": "Hello 1, Julia!"
+}
+{
+  "message": "Hello 2, Julia!"
+}
+{
+  "message": "Hello 3, Julia!"
+}
+{
+  "message": "Hello 4, Julia!"
+}
+{
+  "message": "Hello 5, Julia!"
 }
 ```
 
