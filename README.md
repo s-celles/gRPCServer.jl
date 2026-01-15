@@ -2,7 +2,7 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/s-celles/gRPCServer.jl)
 [![Build Status](https://github.com/s-celles/gRPCServer.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/s-celles/gRPCServer.jl/actions/workflows/CI.yml)
-[![Coverage](https://codecov.io/gh/s-celles/gRPCServer.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/s-celles/gRPCServer.jl)
+[![Coverage](https://codecov.io/gh/s-celles/gRPCServer.jl/branch/develop/graph/badge.svg)](https://codecov.io/gh/s-celles/gRPCServer.jl)
 [![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://s-celles.github.io/gRPCServer.jl/dev)
 
 A native Julia implementation of a [gRPC](https://grpc.io/) server library.
