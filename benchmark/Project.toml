@@ -1,0 +1,11 @@
+[deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+gRPCServer = "f97f078e-81a3-449b-8443-3b3ae5ba1c89"
+ProtoBuf = "3349acd9-ac6a-5e09-bcdb-63829b23a429"
+
+[sources]
+gRPCServer = {path = ".."}
+
+[compat]
+BenchmarkTools = "1"
+julia = "1.10"
