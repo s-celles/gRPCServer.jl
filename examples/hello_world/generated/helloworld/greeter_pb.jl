@@ -11,6 +11,7 @@ export HelloReply, HelloRequest
 struct HelloReply
     message::String
 end
+HelloReply(; message::String = "") = HelloReply(message)
 PB.default_values(::Type{HelloReply}) = (;message = "")
 PB.field_numbers(::Type{HelloReply}) = (;message = 1)
 
@@ -41,6 +42,7 @@ end
 struct HelloRequest
     name::String
 end
+HelloRequest(; name::String = "") = HelloRequest(name)
 PB.default_values(::Type{HelloRequest}) = (;name = "")
 PB.field_numbers(::Type{HelloRequest}) = (;name = 1)
 

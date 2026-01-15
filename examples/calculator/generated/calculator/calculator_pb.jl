@@ -11,6 +11,7 @@ export CalculatorResponse, CalculatorRequest
 struct CalculatorResponse
     result::Float64
 end
+CalculatorResponse(; result::Float64 = zero(Float64)) = CalculatorResponse(result)
 PB.default_values(::Type{CalculatorResponse}) = (;result = zero(Float64))
 PB.field_numbers(::Type{CalculatorResponse}) = (;result = 1)
 
@@ -42,6 +43,7 @@ struct CalculatorRequest
     first_number::Float64
     second_number::Float64
 end
+CalculatorRequest(; first_number::Float64 = zero(Float64), second_number::Float64 = zero(Float64)) = CalculatorRequest(first_number, second_number)
 PB.default_values(::Type{CalculatorRequest}) = (;first_number = zero(Float64), second_number = zero(Float64))
 PB.field_numbers(::Type{CalculatorRequest}) = (;first_number = 1, second_number = 2)
 
