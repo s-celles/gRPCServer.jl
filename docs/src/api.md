@@ -1,5 +1,11 @@
 # API Reference
 
+## Module
+
+```@docs
+gRPCServer
+```
+
 ## Server Types
 
 ```@docs
@@ -69,6 +75,15 @@ set_health!
 get_health
 ```
 
+## Reflection Support
+
+```@docs
+HEALTH_DESCRIPTOR
+REFLECTION_DESCRIPTOR
+has_health_descriptor
+has_reflection_descriptor
+```
+
 ## Server Lifecycle
 
 ```@docs
@@ -103,4 +118,17 @@ decompress
 codec_name
 parse_codec
 negotiate_compression
+```
+
+## Internal Types
+
+These are internal types used by the HTTP/2 implementation. They are documented for reference but are not part of the public API.
+
+```@docs
+gRPCServer.FrameType
+gRPCServer.FrameFlags
+gRPCServer.ErrorCode
+gRPCServer.SettingsParameter
+gRPCServer.StreamState
+gRPCServer.ConnectionState
 ```
