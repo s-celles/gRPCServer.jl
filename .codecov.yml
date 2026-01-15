@@ -31,3 +31,4 @@ ignore:
   - "test/**/*"
   - "examples/**/*"
   - "specs/**/*"
+  - "src/proto/**/*"  # Auto-generated protobuf files
