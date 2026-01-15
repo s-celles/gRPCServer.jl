@@ -29,6 +29,32 @@ The constitution requires integration tests against [gRPCClient.jl](https://gith
 - [ ] Test metadata/header passing
 - [ ] Test compression negotiation
 
+### Full mTLS Client Verification
+
+**Status**: Not Started (blocked on upstream)
+
+OpenSSL.jl does not expose `ssl_set_verify` and `ssl_load_client_ca_file`, so full mTLS client certificate verification is not currently possible.
+
+**Current state**: Client CA can be loaded but verification is not enforced (see `src/tls/config.jl:66-68`).
+
+**Approach**: Contribute missing bindings upstream to [OpenSSL.jl](https://github.com/JuliaWeb/OpenSSL.jl) rather than implementing local ccall workarounds.
+
+**Upstream Tasks**:
+- [ ] Open issue on OpenSSL.jl requesting mTLS verification support
+- [ ] Contribute `SSL_CTX_set_verify` binding to OpenSSL.jl
+- [ ] Contribute `SSL_CTX_load_verify_locations` binding to OpenSSL.jl
+- [ ] Contribute `SSL_get_verify_result` binding to OpenSSL.jl
+
+**Local Tasks** (after upstream merge):
+- [ ] Update gRPCServer.jl to use new OpenSSL.jl bindings
+- [ ] Add tests for mTLS with valid/invalid client certificates
+- [ ] Update documentation with mTLS configuration examples
+
+**References**:
+- [OpenSSL.jl GitHub](https://github.com/JuliaWeb/OpenSSL.jl)
+- [OpenSSL SSL_CTX_set_verify](https://www.openssl.org/docs/man3.0/man3/SSL_CTX_set_verify.html)
+- [gRPC Authentication Guide](https://grpc.io/docs/guides/auth/)
+
 ### Documentation Build Strictness
 
 **Status**: ✅ Complete
