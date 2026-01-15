@@ -17,6 +17,7 @@ UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [compat]
 CodecZlib = "0.7"
+Coverage = "1.8"
 OpenSSL = "1"
 PrecompileTools = "1"
 ProtoBuf = "1.2"
@@ -25,7 +26,8 @@ julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "Test"]
+test = ["Aqua", "Coverage", "Test"]

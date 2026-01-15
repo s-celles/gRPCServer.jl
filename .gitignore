@@ -13,8 +13,12 @@
 !docs/**
 
 # Exception for tests
-!tests/
-!tests/**/*.jl
+!test/
+!test/**/*.jl
+
+# Test fixtures (script but not generated certs)
+!test/fixtures/
+!test/fixtures/*.jl
 
 # Exception for examples
 !examples/
