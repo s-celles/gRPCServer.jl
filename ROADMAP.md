@@ -52,6 +52,7 @@ OpenSSL.jl does not expose `ssl_set_verify` and `ssl_load_client_ca_file`, so fu
 
 **References**:
 - [OpenSSL.jl GitHub](https://github.com/JuliaWeb/OpenSSL.jl)
+- [OpenSSL.jl Issues](https://github.com/JuliaWeb/OpenSSL.jl/issues) (no existing mTLS issue as of 2026-01-15)
 - [OpenSSL SSL_CTX_set_verify](https://www.openssl.org/docs/man3.0/man3/SSL_CTX_set_verify.html)
 - [gRPC Authentication Guide](https://grpc.io/docs/guides/auth/)
 
