@@ -40,6 +40,9 @@ using .TestUtils
     # Contract tests
     include("contract/test_grpcurl.jl")
 
+    # Interoperability tests
+    include("interop/test_hpack_interop.jl")
+
     # Basic module tests
     @testset "Module loads correctly" begin
         @test isdefined(gRPCServer, :GRPCServer)
