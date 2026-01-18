@@ -5,6 +5,12 @@
 using Test
 using gRPCServer
 
+# Include test utilities if not already loaded
+if !isdefined(@__MODULE__, :TestUtils)
+    include("../TestUtils.jl")
+    using .TestUtils
+end
+
 # Include conformance test data
 include("../fixtures/conformance_data.jl")
 using .ConformanceData
@@ -250,5 +256,159 @@ using .ConformanceData
         end
 
     end  # T026
+
+    # =========================================================================
+    # T026b: read_grpc_message! with compression (coverage)
+    # =========================================================================
+
+    @testset "T026b: read_grpc_message! decompression" begin
+
+        @testset "Decompress gzip message" begin
+            # Create stream with grpc-encoding header
+            stream = gRPCServer.HTTP2Stream(UInt32(1))
+            stream.request_headers = [
+                (":method", "POST"),
+                (":path", "/test/Method"),
+                ("content-type", "application/grpc"),
+                ("grpc-encoding", "gzip"),
+            ]
+
+            # Create compressed message
+            original = Vector{UInt8}("Hello, gRPC!")
+            compressed_data = gRPCServer.compress(original, CompressionCodec.GZIP)
+
+            # Build length-prefixed message with compressed flag = 1
+            msg = vcat(
+                UInt8[0x01],  # Compressed flag
+                reinterpret(UInt8, [hton(UInt32(length(compressed_data)))]),
+                compressed_data
+            )
+
+            # Write to stream buffer
+            write(stream.data_buffer, msg)
+
+            # Read and verify decompression
+            result = gRPCServer.read_grpc_message!(stream)
+            @test result !== nothing
+            @test result == original
+        end
+
+        @testset "Decompress deflate message" begin
+            stream = gRPCServer.HTTP2Stream(UInt32(1))
+            stream.request_headers = [
+                (":method", "POST"),
+                (":path", "/test/Method"),
+                ("content-type", "application/grpc"),
+                ("grpc-encoding", "deflate"),
+            ]
+
+            original = Vector{UInt8}("Deflate test data")
+            compressed_data = gRPCServer.compress(original, CompressionCodec.DEFLATE)
+
+            msg = vcat(
+                UInt8[0x01],
+                reinterpret(UInt8, [hton(UInt32(length(compressed_data)))]),
+                compressed_data
+            )
+            write(stream.data_buffer, msg)
+
+            result = gRPCServer.read_grpc_message!(stream)
+            @test result !== nothing
+            @test result == original
+        end
+
+        @testset "Identity encoding with compressed flag" begin
+            stream = gRPCServer.HTTP2Stream(UInt32(1))
+            stream.request_headers = [
+                (":method", "POST"),
+                (":path", "/test/Method"),
+                ("content-type", "application/grpc"),
+                ("grpc-encoding", "identity"),
+            ]
+
+            original = UInt8[0x01, 0x02, 0x03]
+            msg = vcat(
+                UInt8[0x01],  # Compressed flag set
+                reinterpret(UInt8, [hton(UInt32(length(original)))]),
+                original
+            )
+            write(stream.data_buffer, msg)
+
+            # With identity encoding, data should pass through unchanged
+            result = gRPCServer.read_grpc_message!(stream)
+            @test result !== nothing
+            @test result == original
+        end
+
+        @testset "Compressed flag set but no grpc-encoding header" begin
+            stream = gRPCServer.HTTP2Stream(UInt32(1))
+            stream.request_headers = [
+                (":method", "POST"),
+                (":path", "/test/Method"),
+                ("content-type", "application/grpc"),
+                # No grpc-encoding header
+            ]
+
+            data = UInt8[0x01, 0x02, 0x03]
+            msg = vcat(
+                UInt8[0x01],  # Compressed flag set
+                reinterpret(UInt8, [hton(UInt32(length(data)))]),
+                data
+            )
+            write(stream.data_buffer, msg)
+
+            # Should warn but still return data
+            result = gRPCServer.read_grpc_message!(stream)
+            @test result !== nothing
+            @test result == data  # Returns as-is since no encoding specified
+        end
+
+        @testset "Unknown encoding codec" begin
+            stream = gRPCServer.HTTP2Stream(UInt32(1))
+            stream.request_headers = [
+                (":method", "POST"),
+                (":path", "/test/Method"),
+                ("content-type", "application/grpc"),
+                ("grpc-encoding", "unknown-codec"),
+            ]
+
+            data = UInt8[0x01, 0x02, 0x03]
+            msg = vcat(
+                UInt8[0x01],
+                reinterpret(UInt8, [hton(UInt32(length(data)))]),
+                data
+            )
+            write(stream.data_buffer, msg)
+
+            # Unknown codec should return data unchanged
+            result = gRPCServer.read_grpc_message!(stream)
+            @test result !== nothing
+            @test result == data
+        end
+
+        @testset "Uncompressed message (flag = 0)" begin
+            stream = gRPCServer.HTTP2Stream(UInt32(1))
+            stream.request_headers = [
+                (":method", "POST"),
+                (":path", "/test/Method"),
+                ("content-type", "application/grpc"),
+                ("grpc-encoding", "gzip"),  # Header present but flag is 0
+            ]
+
+            data = UInt8[0xAA, 0xBB, 0xCC]
+            msg = vcat(
+                UInt8[0x00],  # Not compressed
+                reinterpret(UInt8, [hton(UInt32(length(data)))]),
+                data
+            )
+            write(stream.data_buffer, msg)
+
+            # Should not attempt decompression
+            result = gRPCServer.read_grpc_message!(stream)
+            @test result !== nothing
+            @test result == data
+        end
+
+    end  # T026b
 
 end  # AC3: Message Encoding
