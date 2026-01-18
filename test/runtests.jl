@@ -25,6 +25,15 @@ using .TestUtils
     include("unit/test_http2_stream.jl")
     include("unit/test_stream_state_validation.jl")
     include("unit/test_content_type.jl")
+    include("unit/test_grpc_protocol.jl")
+    include("unit/test_http2_conformance.jl")
+    include("unit/test_request_validation.jl")
+    include("unit/test_response_format.jl")
+    include("unit/test_message_encoding.jl")
+    include("unit/test_custom_metadata.jl")
+    include("unit/test_error_mapping.jl")
+    include("unit/test_connection_management.jl")
+    include("unit/test_timeout_handling.jl")
 
     # Integration tests
     include("integration/test_unary.jl")

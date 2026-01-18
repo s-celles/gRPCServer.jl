@@ -95,6 +95,7 @@ export ServerStatus, StatusCode, MethodType, HealthStatus, CompressionCodec
 # Error Types
 export GRPCError, BindError, ServiceAlreadyRegisteredError
 export InvalidServerStateError, MethodSignatureError, StreamCancelledError
+export status_code_to_http, exception_to_status_code, http2_to_grpc_status
 
 # Stream Types
 export ServerStream, ClientStream, BidiStream

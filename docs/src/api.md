@@ -53,6 +53,9 @@ ServiceAlreadyRegisteredError
 InvalidServerStateError
 MethodSignatureError
 StreamCancelledError
+status_code_to_http
+exception_to_status_code
+http2_to_grpc_status
 ```
 
 ## Interceptors
