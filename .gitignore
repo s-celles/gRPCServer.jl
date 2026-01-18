@@ -64,6 +64,16 @@ benchmark/*.json
 !test/fixtures/
 !test/fixtures/*.jl
 
+# HPACK interoperability test vectors
+!test/fixtures/hpack-test-case/
+!test/fixtures/hpack-test-case/**
+!test/fixtures/hpack-test-case/**/*.json
+!test/fixtures/hpack-test-case/**/README.md
+
+# Interoperability tests
+!test/interop/
+!test/interop/**/*.jl
+
 # Exception for examples
 !examples/
 !examples/**
