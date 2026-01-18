@@ -812,6 +812,8 @@ end
 Read one complete gRPC message from the stream buffer.
 Returns nothing if no complete message is available.
 gRPC messages are length-prefixed: 1 byte compressed flag + 4 bytes length + message.
+
+Handles decompression if the compressed flag is set and grpc-encoding header is present.
 """
 function read_grpc_message!(stream::HTTP2Stream)::Union{Vector{UInt8}, Nothing}
     data = take!(stream.data_buffer)
@@ -821,8 +823,8 @@ function read_grpc_message!(stream::HTTP2Stream)::Union{Vector{UInt8}, Nothing}
         return nothing
     end
 
-    # Parse message length (big-endian)
-    # compressed = data[1] != 0x00  # TODO: handle compression
+    # Parse compressed flag and message length (big-endian)
+    compressed = data[1] != 0x00
     msg_len = (UInt32(data[2]) << 24) | (UInt32(data[3]) << 16) |
               (UInt32(data[4]) << 8) | UInt32(data[5])
 
@@ -839,6 +841,24 @@ function read_grpc_message!(stream::HTTP2Stream)::Union{Vector{UInt8}, Nothing}
     # Put remaining data back in buffer
     if length(data) > total_msg_size
         write(stream.data_buffer, data[(total_msg_size + 1):end])
+    end
+
+    # Handle decompression if compressed flag is set
+    if compressed
+        encoding = get_grpc_encoding(stream)
+        if encoding !== nothing
+            codec = parse_codec(encoding)
+            if codec !== nothing && codec != CompressionCodec.IDENTITY
+                try
+                    message = decompress(message, codec)
+                catch e
+                    @warn "Failed to decompress gRPC message" encoding=encoding exception=e
+                    # Return compressed data if decompression fails
+                end
+            end
+        else
+            @warn "Compressed flag set but no grpc-encoding header"
+        end
     end
 
     return message
@@ -867,6 +887,16 @@ function process_stream_request!(server::GRPCServer, conn::HTTP2Connection,
     if content_type === nothing || !startswith(content_type, "application/grpc")
         send_error_response(conn, io, stream.id, StatusCode.INVALID_ARGUMENT, "Invalid content-type"; content_type=response_content_type)
         return
+    end
+
+    # Check TE header (warn if missing/incorrect, but don't reject)
+    # Per gRPC spec: "te: trailers" MUST be present to detect incompatible proxies
+    # However, many clients omit this, so we only warn per research.md decision
+    te_header = get_header(stream, "te")
+    if te_header === nothing
+        @debug "Missing TE header in gRPC request" method=method_path
+    elseif lowercase(te_header) != "trailers"
+        @warn "Invalid TE header in gRPC request" method=method_path te=te_header expected="trailers"
     end
 
     # Read one gRPC message

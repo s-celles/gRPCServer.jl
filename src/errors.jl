@@ -230,3 +230,62 @@ function exception_to_status_code(e::Exception)::StatusCode.T
         return StatusCode.INTERNAL
     end
 end
+
+# HTTP/2 error code constants for mapping (duplicated from frames.jl for isolation)
+const _HTTP2_REFUSED_STREAM = 0x07
+const _HTTP2_CANCEL = 0x08
+const _HTTP2_ENHANCE_YOUR_CALM = 0x0b
+const _HTTP2_INADEQUATE_SECURITY = 0x0c
+
+"""
+    http2_to_grpc_status(http2_error_code::UInt32) -> StatusCode.T
+
+Map an HTTP/2 error code to a gRPC status code.
+
+This mapping is per the gRPC HTTP/2 protocol specification:
+https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
+
+# HTTP/2 Error Code Mappings
+- NO_ERROR (0x0) → INTERNAL (unexpected for RST_STREAM)
+- PROTOCOL_ERROR (0x1) → INTERNAL
+- INTERNAL_ERROR (0x2) → INTERNAL
+- FLOW_CONTROL_ERROR (0x3) → INTERNAL
+- SETTINGS_TIMEOUT (0x4) → INTERNAL
+- STREAM_CLOSED (0x5) → INTERNAL
+- FRAME_SIZE_ERROR (0x6) → INTERNAL
+- REFUSED_STREAM (0x7) → UNAVAILABLE
+- CANCEL (0x8) → CANCELLED
+- COMPRESSION_ERROR (0x9) → INTERNAL
+- CONNECT_ERROR (0xa) → INTERNAL
+- ENHANCE_YOUR_CALM (0xb) → RESOURCE_EXHAUSTED
+- INADEQUATE_SECURITY (0xc) → PERMISSION_DENIED
+- HTTP_1_1_REQUIRED (0xd) → INTERNAL
+
+# Example
+```julia
+grpc_status = http2_to_grpc_status(0x08)  # CANCEL → CANCELLED
+```
+"""
+function http2_to_grpc_status(http2_error_code::UInt32)::StatusCode.T
+    if http2_error_code == _HTTP2_CANCEL
+        return StatusCode.CANCELLED
+    elseif http2_error_code == _HTTP2_REFUSED_STREAM
+        return StatusCode.UNAVAILABLE
+    elseif http2_error_code == _HTTP2_ENHANCE_YOUR_CALM
+        return StatusCode.RESOURCE_EXHAUSTED
+    elseif http2_error_code == _HTTP2_INADEQUATE_SECURITY
+        return StatusCode.PERMISSION_DENIED
+    else
+        # All other HTTP/2 errors map to INTERNAL
+        return StatusCode.INTERNAL
+    end
+end
+
+"""
+    http2_to_grpc_status(http2_error_code::Integer) -> StatusCode.T
+
+Convenience method accepting any integer type.
+"""
+function http2_to_grpc_status(http2_error_code::Integer)::StatusCode.T
+    return http2_to_grpc_status(UInt32(http2_error_code))
+end

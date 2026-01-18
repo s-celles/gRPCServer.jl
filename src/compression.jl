@@ -39,12 +39,12 @@ function codec_name(codec::CompressionCodec.T)::String
 end
 
 """
-    parse_codec(name::String) -> Union{CompressionCodec.T, Nothing}
+    parse_codec(name::AbstractString) -> Union{CompressionCodec.T, Nothing}
 
 Parse a gRPC encoding name to a compression codec.
 Returns `nothing` if the encoding is not supported.
 """
-function parse_codec(name::String)::Union{CompressionCodec.T, Nothing}
+function parse_codec(name::AbstractString)::Union{CompressionCodec.T, Nothing}
     name = lowercase(strip(name))
     if name == "identity" || name == ""
         CompressionCodec.IDENTITY
