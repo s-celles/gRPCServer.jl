@@ -23,6 +23,8 @@ using .TestUtils
     include("unit/test_reflection.jl")
     include("unit/test_hpack.jl")
     include("unit/test_http2_stream.jl")
+    include("unit/test_stream_state_validation.jl")
+    include("unit/test_content_type.jl")
 
     # Integration tests
     include("integration/test_unary.jl")

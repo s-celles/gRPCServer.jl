@@ -120,6 +120,15 @@ parse_codec
 negotiate_compression
 ```
 
+## HTTP/2 Stream State
+
+These functions are used for advanced stream state management, particularly for handling edge cases with client disconnection.
+
+```@docs
+can_send
+StreamError
+```
+
 ## Internal Types
 
 These are internal types used by the HTTP/2 implementation. They are documented for reference but are not part of the public API.
