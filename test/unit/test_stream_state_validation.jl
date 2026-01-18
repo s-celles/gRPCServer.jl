@@ -116,4 +116,103 @@ using gRPCServer
         @test stream.state == gRPCServer.StreamState.CLOSED
         @test gRPCServer.can_send(stream) == false
     end
+
+    @testset "send_grpc_response on closed stream" begin
+        # Test that send_grpc_response gracefully handles closed streams
+        conn = gRPCServer.HTTP2Connection()
+        conn.state = gRPCServer.ConnectionState.OPEN
+        io = IOBuffer()
+
+        # Create and close a stream
+        stream = gRPCServer.create_stream(conn, UInt32(1))
+        gRPCServer.receive_headers!(stream, true)
+        gRPCServer.send_headers!(stream, true)  # Close the stream
+        @test gRPCServer.can_send_on_stream(conn, UInt32(1)) == false
+
+        # This should return early without throwing (logs a warning)
+        # Using Test.@test_logs to verify warning is logged
+        @test_logs (:warn, r"Cannot send gRPC response") gRPCServer.send_grpc_response(
+            conn, io, UInt32(1),
+            gRPCServer.StatusCode.OK, "", UInt8[]
+        )
+
+        # IO buffer should be empty since no data was sent
+        @test position(io) == 0
+    end
+
+    @testset "send_error_response on closed stream" begin
+        # Test that send_error_response gracefully handles closed streams
+        conn = gRPCServer.HTTP2Connection()
+        conn.state = gRPCServer.ConnectionState.OPEN
+        io = IOBuffer()
+
+        # Create and close a stream
+        stream = gRPCServer.create_stream(conn, UInt32(3))
+        gRPCServer.receive_headers!(stream, true)
+        gRPCServer.send_headers!(stream, true)  # Close the stream
+        @test gRPCServer.can_send_on_stream(conn, UInt32(3)) == false
+
+        # This should return early without throwing (logs a warning)
+        @test_logs (:warn, r"Cannot send error response") gRPCServer.send_error_response(
+            conn, io, UInt32(3),
+            gRPCServer.StatusCode.INTERNAL, "Test error"
+        )
+
+        # IO buffer should be empty since no data was sent
+        @test position(io) == 0
+    end
+
+    @testset "send_grpc_response on non-existent stream" begin
+        # Test that send_grpc_response handles non-existent streams
+        conn = gRPCServer.HTTP2Connection()
+        conn.state = gRPCServer.ConnectionState.OPEN
+        io = IOBuffer()
+
+        # Stream 999 doesn't exist
+        @test gRPCServer.can_send_on_stream(conn, UInt32(999)) == false
+
+        # This should return early without throwing
+        @test_logs (:warn, r"Cannot send gRPC response") gRPCServer.send_grpc_response(
+            conn, io, UInt32(999),
+            gRPCServer.StatusCode.OK, "", UInt8[]
+        )
+
+        # IO buffer should be empty
+        @test position(io) == 0
+    end
+
+    @testset "send_error_response on non-existent stream" begin
+        # Test that send_error_response handles non-existent streams
+        conn = gRPCServer.HTTP2Connection()
+        conn.state = gRPCServer.ConnectionState.OPEN
+        io = IOBuffer()
+
+        # Stream 999 doesn't exist
+        @test_logs (:warn, r"Cannot send error response") gRPCServer.send_error_response(
+            conn, io, UInt32(999),
+            gRPCServer.StatusCode.CANCELLED, "Client cancelled"
+        )
+
+        # IO buffer should be empty
+        @test position(io) == 0
+    end
+
+    @testset "get_response_content_type helper" begin
+        # Test content-type mirroring logic
+        stream = gRPCServer.HTTP2Stream(1)
+        stream.request_headers = [("content-type", "application/grpc+proto")]
+        @test gRPCServer.get_response_content_type(stream) == "application/grpc+proto"
+
+        stream2 = gRPCServer.HTTP2Stream(3)
+        stream2.request_headers = [("content-type", "application/grpc")]
+        @test gRPCServer.get_response_content_type(stream2) == "application/grpc"
+
+        stream3 = gRPCServer.HTTP2Stream(5)
+        stream3.request_headers = []  # No content-type
+        @test gRPCServer.get_response_content_type(stream3) == "application/grpc"
+
+        stream4 = gRPCServer.HTTP2Stream(7)
+        stream4.request_headers = [("content-type", "text/plain")]  # Invalid
+        @test gRPCServer.get_response_content_type(stream4) == "application/grpc"
+    end
 end
