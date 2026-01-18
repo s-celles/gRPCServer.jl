@@ -194,6 +194,17 @@ function get_stream(conn::HTTP2Connection, stream_id::UInt32)::Union{HTTP2Stream
 end
 
 """
+    can_send_on_stream(conn::HTTP2Connection, stream_id::UInt32) -> Bool
+
+Check if data can be sent on a stream. Returns false if stream doesn't exist
+or is not in a sendable state.
+"""
+function can_send_on_stream(conn::HTTP2Connection, stream_id::UInt32)::Bool
+    stream = get_stream(conn, stream_id)
+    return stream !== nothing && can_send(stream)
+end
+
+"""
     create_stream(conn::HTTP2Connection, stream_id::UInt32) -> HTTP2Stream
 
 Create a new stream.

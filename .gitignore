@@ -41,6 +41,7 @@
 
 # Tests
 !test/
+!test/*/
 !test/**/*.jl
 !test/fixtures/
 !test/fixtures/*.jl
@@ -56,6 +57,7 @@ benchmark/*.json
 
 # Exception for tests
 !test/
+!test/*/
 !test/**/*.jl
 
 # Test fixtures (script but not generated certs)

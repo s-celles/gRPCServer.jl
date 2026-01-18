@@ -133,6 +133,9 @@ export compress, decompress, codec_name, parse_codec, negotiate_compression
 export HEALTH_DESCRIPTOR, REFLECTION_DESCRIPTOR
 export has_health_descriptor, has_reflection_descriptor
 
+# HTTP/2 Stream State (for advanced use cases)
+export can_send, StreamError
+
 # Precompilation workload for faster time-to-first-execution
 @compile_workload begin
     # Create a server (common first operation)

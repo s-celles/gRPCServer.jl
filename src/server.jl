@@ -772,11 +772,13 @@ function process_completed_streams!(server::GRPCServer, conn::HTTP2Connection,
             end
         catch e
             # Handle errors by sending appropriate response
+            # Get content-type from request to mirror in error response
+            error_content_type = get_response_content_type(stream)
             if e isa GRPCError
-                send_error_response(conn, io, stream_id, e.code, e.message)
+                send_error_response(conn, io, stream_id, e.code, e.message; content_type=error_content_type)
             else
                 @error "Error processing stream" stream_id=stream_id exception=(e, catch_backtrace())
-                send_error_response(conn, io, stream_id, StatusCode.INTERNAL, "Internal server error")
+                send_error_response(conn, io, stream_id, StatusCode.INTERNAL, "Internal server error"; content_type=error_content_type)
             end
             # Always remove stream on error
             remove_stream(conn, stream_id)
@@ -850,17 +852,20 @@ Process a gRPC request on a stream. For streaming RPCs, processes one message.
 """
 function process_stream_request!(server::GRPCServer, conn::HTTP2Connection,
                                  stream::HTTP2Stream, io::IO, peer::PeerInfo)
+    # Get content-type from request to mirror in responses
+    response_content_type = get_response_content_type(stream)
+
     # Extract request information from stream
     method_path = get_path(stream)
     if method_path === nothing
-        send_error_response(conn, io, stream.id, StatusCode.INVALID_ARGUMENT, "Missing :path header")
+        send_error_response(conn, io, stream.id, StatusCode.INVALID_ARGUMENT, "Missing :path header"; content_type=response_content_type)
         return
     end
 
     # Validate content-type
     content_type = get_content_type(stream)
     if content_type === nothing || !startswith(content_type, "application/grpc")
-        send_error_response(conn, io, stream.id, StatusCode.INVALID_ARGUMENT, "Invalid content-type")
+        send_error_response(conn, io, stream.id, StatusCode.INVALID_ARGUMENT, "Invalid content-type"; content_type=response_content_type)
         return
     end
 
@@ -883,7 +888,7 @@ function process_stream_request!(server::GRPCServer, conn::HTTP2Connection,
     # Look up method to determine type
     result = lookup_method(server.dispatcher.registry, method_path)
     if result === nothing
-        send_error_response(conn, io, stream.id, StatusCode.UNIMPLEMENTED, "Method not found: $method_path")
+        send_error_response(conn, io, stream.id, StatusCode.UNIMPLEMENTED, "Method not found: $method_path"; content_type=response_content_type)
         return
     end
 
@@ -893,7 +898,7 @@ function process_stream_request!(server::GRPCServer, conn::HTTP2Connection,
     if method_desc.method_type == MethodType.UNARY
         status, message, response_data = dispatch_unary(server.dispatcher, ctx, grpc_data)
         @debug "gRPC response" status=status response_len=length(response_data)
-        send_grpc_response(conn, io, stream.id, status, message, response_data)
+        send_grpc_response(conn, io, stream.id, status, message, response_data; content_type=response_content_type)
 
     elseif method_desc.method_type == MethodType.SERVER_STREAMING
         # Handle server streaming - multiple responses to one request
@@ -904,10 +909,10 @@ function process_stream_request!(server::GRPCServer, conn::HTTP2Connection,
         # For streaming methods, handle one message at a time
         status, message, response_data = dispatch_streaming_message(server.dispatcher, ctx, grpc_data, method_desc, service)
         @debug "gRPC response" status=status response_len=length(response_data)
-        send_grpc_response(conn, io, stream.id, status, message, response_data)
+        send_grpc_response(conn, io, stream.id, status, message, response_data; content_type=response_content_type)
 
     else
-        send_error_response(conn, io, stream.id, StatusCode.UNIMPLEMENTED, "Method type $(method_desc.method_type) not supported")
+        send_error_response(conn, io, stream.id, StatusCode.UNIMPLEMENTED, "Method type $(method_desc.method_type) not supported"; content_type=response_content_type)
     end
 end
 
@@ -927,10 +932,19 @@ function handle_server_streaming(
     method_desc::MethodDescriptor,
     service::ServiceDescriptor
 )
+    # Check if stream is still sendable before attempting to send
+    if !can_send(stream)
+        @warn "Cannot start server streaming, stream not in sendable state" stream_id=stream.id
+        return
+    end
+
+    # Get content-type from request to mirror in response
+    response_content_type = get_response_content_type(stream)
+
     # Send response headers first (before any data)
     response_headers = [
         (":status", "200"),
-        ("content-type", "application/grpc"),
+        ("content-type", response_content_type),
         ("grpc-encoding", "identity"),
     ]
     header_frames = send_headers(conn, stream.id, response_headers; end_stream=false)
@@ -1132,17 +1146,41 @@ end
 # Note: parse_grpc_timeout is defined in context.jl
 
 """
+    get_response_content_type(stream::HTTP2Stream) -> String
+
+Get the appropriate content-type for the response based on the request.
+Mirrors the client's content-type if it's a valid gRPC content-type,
+otherwise defaults to "application/grpc".
+"""
+function get_response_content_type(stream::HTTP2Stream)::String
+    request_content_type = get_content_type(stream)
+    if request_content_type !== nothing && startswith(request_content_type, "application/grpc")
+        return request_content_type
+    end
+    return "application/grpc"
+end
+
+"""
     send_grpc_response(conn::HTTP2Connection, io::IO, stream_id::UInt32,
-                       status::StatusCode.T, message::String, data::Vector{UInt8})
+                       status::StatusCode.T, message::String, data::Vector{UInt8};
+                       content_type::String="application/grpc")
 
 Send a complete gRPC response (headers, data, trailers).
+Checks stream state before sending - if stream is not sendable, logs a warning and returns.
 """
 function send_grpc_response(conn::HTTP2Connection, io::IO, stream_id::UInt32,
-                            status::StatusCode.T, message::String, data::Vector{UInt8})
+                            status::StatusCode.T, message::String, data::Vector{UInt8};
+                            content_type::String="application/grpc")
+    # Check if stream is still sendable before attempting to send
+    if !can_send_on_stream(conn, stream_id)
+        @warn "Cannot send gRPC response, stream not in sendable state" stream_id
+        return
+    end
+
     # Send response headers
     response_headers = [
         (":status", "200"),
-        ("content-type", "application/grpc"),
+        ("content-type", content_type),
         ("grpc-encoding", "identity"),
     ]
     header_frames = send_headers(conn, stream_id, response_headers; end_stream=false)
@@ -1168,17 +1206,26 @@ end
 
 """
     send_error_response(conn::HTTP2Connection, io::IO, stream_id::UInt32,
-                        status::StatusCode.T, message::String)
+                        status::StatusCode.T, message::String;
+                        content_type::String="application/grpc")
 
 Send an error response (headers + trailers only, no data).
+Checks stream state before sending - if stream is not sendable, logs a warning and returns.
 """
 function send_error_response(conn::HTTP2Connection, io::IO, stream_id::UInt32,
-                             status::StatusCode.T, message::String)
+                             status::StatusCode.T, message::String;
+                             content_type::String="application/grpc")
+    # Check if stream is still sendable before attempting to send
+    if !can_send_on_stream(conn, stream_id)
+        @warn "Cannot send error response, stream not in sendable state" stream_id status message
+        return
+    end
+
     # For errors, we can send headers and trailers in one go
     # Using trailers-only response format
     response_headers = [
         (":status", "200"),
-        ("content-type", "application/grpc"),
+        ("content-type", content_type),
         ("grpc-status", string(Int(status))),
         ("grpc-message", message),
     ]
